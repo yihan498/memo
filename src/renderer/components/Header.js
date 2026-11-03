@@ -20,7 +20,7 @@ export class Header {
     updateDate() {
         const d = new Date();
         const week = '日一二三四五六'[d.getDay()];
-        this.dateEl.textContent = `${d.getMonth() + 1}月${d.getDate()}日 周${week}`;
+        this.dateEl.textContent = `${d.getMonth() + 1}/${d.getDate()} 周${week}`;
     }
 
     async toggleCompactMode() {

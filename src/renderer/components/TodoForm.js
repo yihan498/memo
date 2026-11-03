@@ -26,7 +26,10 @@ export class TodoForm {
         document.getElementById('fSave').addEventListener('click', () => this.save());
         this.el.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { e.stopPropagation(); this.close(); }
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this.save();
+            const mod = e.ctrlKey || e.metaKey;
+            if (mod && (e.key === 'Enter' || e.key.toLowerCase() === 's')) { e.preventDefault(); this.save(); }
+            if (e.altKey && e.key.toLowerCase() === 'i') { e.preventDefault(); this.fImportant.click(); }
+            if (e.altKey && e.key.toLowerCase() === 'u') { e.preventDefault(); this.fUrgent.click(); }
         });
     }
 

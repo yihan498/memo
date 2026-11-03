@@ -1,7 +1,7 @@
 {
   "name": "desktop-todo",
   "version": "2.0.0",
-  "description": "Nudge — 每日常规 + 零碎备忘的桌面提醒（基于 flost8 改造）",
+  "description": "Daybook — 每日常规（可计时）+ 零碎备忘 + 完成记录的桌面小本子（基于 flost8 改造）",
   "main": "src/main.js",
   "author": "Aryan Singh",
   "license": "MIT",
@@ -28,8 +28,8 @@
     "electron-store": "^8.1.0"
   },
   "build": {
-    "appId": "com.tianyihan.nudge",
-    "productName": "Nudge",
+    "appId": "com.tianyihan.daybook",
+    "productName": "Daybook",
     "artifactName": "${productName}.${ext}",
     "directories": {
       "output": "dist"

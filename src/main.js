@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage, Notification } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage, Notification, globalShortcut } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -8,7 +8,7 @@ app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // Windows 通知需要 AppUserModelId
-app.setAppUserModelId('Nudge');
+app.setAppUserModelId('Daybook');
 
 // 开发调试：TODO_DATA_DIR 指定独立数据目录，避免污染真实数据
 // 数据目录固定为 %APPDATA%/desktop-todo，改名 / 打包都不会丢数据
@@ -123,7 +123,7 @@ function createTray() {
       }
     ]);
 
-    tray.setToolTip('Nudge');
+    tray.setToolTip('Daybook（Ctrl+Alt+D 呼出）');
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {
@@ -167,6 +167,15 @@ if (!gotTheLock) {
 
   createWindow();
   createTray();
+
+  // 全局快捷键：任何地方按 Ctrl+Alt+D 呼出 / 隐藏（被别的软件占用时静默跳过）
+  try {
+    globalShortcut.register('CommandOrControl+Alt+D', () => {
+      if (!mainWindow) return;
+      if (mainWindow.isVisible() && mainWindow.isFocused()) mainWindow.hide();
+      else { mainWindow.show(); mainWindow.focus(); }
+    });
+  } catch (e) { console.warn('globalShortcut failed', e); }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -238,6 +247,7 @@ ipcMain.handle('notify', (event, title, body) => {
 });
 
 app.on('before-quit', () => { isQuitting = true; });
+app.on('will-quit', () => globalShortcut.unregisterAll());
 
 ipcMain.handle('get-screen-size', () => {
   const primaryDisplay = screen.getPrimaryDisplay();

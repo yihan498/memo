@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nudge</title>
+    <title>Daybook</title>
     <style>
         /* 极简黑白 + 橙。所有颜色只从这里的变量取 */
         :root {
@@ -15,6 +15,10 @@
             --accent: #FF6A00;
             --accent-soft: rgba(255, 106, 0, 0.12);
             --on-accent: #FFFFFF;
+            --ok: #1F9D55;
+            --ok-soft: rgba(31, 157, 85, 0.12);
+            --bad: #E5484D;
+            --bad-soft: rgba(229, 72, 77, 0.12);
             color-scheme: light;
         }
         html.dark {
@@ -26,6 +30,10 @@
             --accent: #FF6A00;
             --accent-soft: rgba(255, 106, 0, 0.16);
             --on-accent: #111111;
+            --ok: #3DD68C;
+            --ok-soft: rgba(61, 214, 140, 0.14);
+            --bad: #FF6369;
+            --bad-soft: rgba(255, 99, 105, 0.14);
             color-scheme: dark;
         }
 
@@ -48,12 +56,12 @@
 
         /* 标题栏：控制按钮常驻右上角 */
         .titlebar { display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 6px 0 14px; flex-shrink: 0; }
-        .brand { display: flex; align-items: baseline; gap: 8px; }
+        .brand { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; min-width: 0; overflow: hidden; }
         .brand-name { font-size: 16px; font-weight: 700; letter-spacing: .3px; }
         .brand-name::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 3px; }
         .brand-date { font-size: 11px; color: var(--muted); }
-        .controls { display: flex; align-items: center; gap: 2px; }
-        .icon-btn { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); }
+        .controls { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+        .icon-btn { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); }
         .icon-btn:hover { background: var(--soft); color: var(--fg); }
         .icon-btn.on { color: var(--accent); }
         .icon-btn.close:hover { background: var(--accent); color: var(--on-accent); }
@@ -73,8 +81,8 @@
         .daily-progress { font-weight: 600; color: var(--fg); margin-right: 8px; }
         .daily-dots { display: inline-flex; gap: 4px; vertical-align: middle; }
         .day-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
-        .day-dot.done { background: var(--fg); }
-        .day-dot.missed { background: var(--accent); }
+        .day-dot.done { background: var(--ok); }
+        .day-dot.missed { background: var(--bad); }
         .day-dot.today { background: transparent; box-shadow: inset 0 0 0 1.5px var(--fg); }
         .check-time { font-size: 11px; background: transparent; border: none; border-bottom: 1px dashed var(--muted); outline: none; width: 64px; color: var(--fg); }
 
@@ -119,6 +127,34 @@
         .tag.imp { background: var(--accent); color: var(--on-accent); }
         .tag.urg { border: 1px solid var(--accent); color: var(--accent); line-height: 14px; }
         .tag.missed { background: var(--accent-soft); color: var(--accent); }
+        /* 每日常规：通过绿 / 未完成红 */
+        .task.pass .box { background: var(--ok); border-color: var(--ok); }
+        .task.fail .box { border-color: var(--bad); }
+        .task.fail .task-text { color: var(--bad); }
+        .tag.ok { background: var(--ok-soft); color: var(--ok); font-weight: 600; }
+        .tag.bad { background: var(--bad-soft); color: var(--bad); font-weight: 600; }
+        .task.selected { box-shadow: inset 2px 0 0 var(--accent); background: var(--soft); }
+        .task:focus { outline: none; }
+        /* 计时 */
+        .timer { margin-top: 4px; }
+        .timer-line { display: flex; align-items: baseline; gap: 4px; }
+        .clock { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .clock.running { color: var(--accent); }
+        .clock.running::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 5px; vertical-align: middle; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: .2; } }
+        .target { font-size: 11px; color: var(--muted); }
+        .bar { height: 3px; background: var(--line); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+        .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
+        .task.pass .bar i { background: var(--ok); }
+        .sessions { font-size: 10px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+        .timer-btn { width: 28px; height: 28px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: var(--soft); color: var(--fg); margin-top: 2px; }
+        .timer-btn:hover { background: var(--accent-soft); color: var(--accent); }
+        .timer-btn.running { background: var(--accent); color: var(--on-accent); }
+        .timer-btn svg { width: 11px; height: 11px; }
+        .edit-row { display: flex; gap: 8px; }
+        .edit-min { width: 56px !important; flex-shrink: 0; }
+        .task .delete-btn.confirm, .task .delete-btn.confirm:hover { opacity: 1; width: auto; padding: 0 7px; font-size: 11px; color: #fff; background: var(--bad); white-space: nowrap; }
+        .link-btn.danger { color: var(--bad); font-weight: 600; }
         .delete-btn { opacity: 0; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 5px; color: var(--muted); }
         .task:hover .delete-btn { opacity: 1; }
         .delete-btn:hover { color: var(--accent); background: var(--accent-soft); }
@@ -132,6 +168,8 @@
         /* 底部 */
         .footer { padding: 8px 10px 8px; border-top: 1px solid var(--line); flex-shrink: 0; }
         .input-row { display: flex; align-items: center; gap: 6px; background: var(--soft); border-radius: 8px; padding: 2px 4px 2px 10px; }
+        .input-row .target-in { flex: 0 0 52px; width: 52px; text-align: right; font-size: 11px; border-left: 1px solid var(--line); padding-left: 6px; }
+        .target-in::-webkit-inner-spin-button { display: none; }
         .input-row input { flex: 1; background: transparent; border: none; outline: none; padding: 7px 0; }
         .input-row input::placeholder { color: var(--muted); }
         .add-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 17px; line-height: 1; }
@@ -159,6 +197,49 @@
         .btn { flex: 1; padding: 8px; border-radius: 8px; }
         .btn.ghost { background: var(--soft); }
         .btn.primary { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+        kbd { font-family: inherit; font-size: 10px; font-weight: 500; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,.14); margin-left: 6px; opacity: .75; vertical-align: 1px; }
+        .btn.ghost kbd { background: var(--line); }
+
+        /* 记录页 */
+        .records { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+        .rec-top { padding: 8px 14px 6px; flex-shrink: 0; }
+        .rec-range { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11px; color: var(--muted); }
+        .rec-range input { flex: 1; min-width: 0; background: var(--soft); border: none; border-radius: 5px; padding: 3px 5px; font-size: 11px; outline: none; }
+        .rec-body { flex: 1; overflow-y: auto; padding: 4px 14px 14px; }
+        .rec-body::-webkit-scrollbar, .help-card::-webkit-scrollbar { width: 5px; }
+        .help-card::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+        .rec-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+        .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .card { background: var(--soft); border-radius: 8px; padding: 8px 10px; }
+        .card b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+        .card b small { font-size: 12px; color: var(--muted); font-weight: 500; }
+        .card span { font-size: 10px; color: var(--muted); line-height: 1.4; }
+        .rec-h { font-size: 11px; color: var(--muted); margin: 14px 0 6px; letter-spacing: .5px; }
+        .per { display: grid; grid-template-columns: 1fr 56px 84px; align-items: center; gap: 8px; font-size: 12px; padding: 3px 0; }
+        .per-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .per-bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+        .per-bar i { display: block; height: 100%; background: var(--accent); }
+        .per-bar i.ok { background: var(--ok); } .per-bar i.bad { background: var(--bad); }
+        .per-num { text-align: right; white-space: nowrap; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .day { padding: 7px 0; border-bottom: 1px solid var(--line); }
+        .day-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+        .day-st { font-size: 11px; color: var(--muted); }
+        .day-st.ok { color: var(--ok); font-weight: 600; } .day-st.bad { color: var(--bad); font-weight: 600; }
+        .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+        .chip { font-size: 11px; padding: 1px 7px; border-radius: 10px; background: var(--soft); color: var(--muted); }
+        .chip.ok { background: var(--ok-soft); color: var(--ok); }
+        .chip.bad { background: var(--bad-soft); color: var(--bad); }
+        .chip em { font-style: normal; font-weight: 600; }
+        .chip small { display: block; font-size: 9px; opacity: .8; }
+        .rec-empty { color: var(--muted); font-size: 12px; text-align: center; margin-top: 30px; }
+
+        /* 快捷键帮助 */
+        .help { position: absolute; inset: 0; z-index: 30; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; padding: 14px; }
+        .help-card { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; width: 100%; max-height: 100%; overflow-y: auto; font-size: 12px; }
+        .help-card h4 { margin: 8px 0 4px; font-size: 11px; color: var(--muted); font-weight: 500; }
+        .help-card h4:first-child { margin-top: 0; }
+        .help-row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .help-row kbd { margin: 0; opacity: 1; background: var(--soft); color: var(--fg); }
 
         /* 动画 */
         .slide-in { animation: slideIn .18s ease-out; }
@@ -173,20 +254,23 @@
     <div id="app">
         <header class="titlebar drag">
             <div class="brand">
-                <span class="brand-name">Nudge</span>
+                <span class="brand-name">Daybook</span>
                 <span id="brandDate" class="brand-date"></span>
             </div>
             <div class="controls no-drag">
-                <button id="alwaysOnTopBtn" class="icon-btn" title="置顶">
+                <button id="helpBtn" class="icon-btn" title="快捷键（?）">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+                </button>
+                <button id="alwaysOnTopBtn" class="icon-btn" title="置顶（Ctrl+P）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                 </button>
-                <button id="themeBtn" class="icon-btn" title="深色 / 浅色">
+                <button id="themeBtn" class="icon-btn" title="深色 / 浅色（Ctrl+T）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
-                <button id="compactBtn" class="icon-btn" title="收起 / 展开">
+                <button id="compactBtn" class="icon-btn" title="收起 / 展开（Ctrl+M）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
-                <button id="closeBtn" class="icon-btn close" title="隐藏到托盘">
+                <button id="closeBtn" class="icon-btn close" title="隐藏到托盘（Ctrl+W / Esc）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
@@ -196,6 +280,7 @@
             <nav class="tabs no-drag">
                 <button class="tab-btn" data-view="daily">每日常规<span class="tab-count"></span></button>
                 <button class="tab-btn" data-view="todo">零碎待办<span class="tab-count"></span></button>
+                <button class="tab-btn" data-view="records">记录</button>
             </nav>
 
             <div id="dailyBar" class="daily-bar no-drag hidden">
@@ -216,7 +301,7 @@
                 </div>
             </div>
 
-            <div class="list-wrap no-drag">
+            <div id="listWrap" class="list-wrap no-drag">
                 <div id="tasksList" class="list"></div>
                 <div id="emptyState" class="empty hidden">
                     <p id="emptyTitle"></p>
@@ -224,15 +309,31 @@
                 </div>
             </div>
 
-            <footer class="footer no-drag">
+            <div id="recordsView" class="records no-drag hidden">
+                <div class="rec-top">
+                    <div class="seg">
+                        <button class="seg-btn rec-preset" data-p="7">近 7 天</button>
+                        <button class="seg-btn rec-preset" data-p="30">近 30 天</button>
+                        <button class="seg-btn rec-preset" data-p="month">本月</button>
+                        <button class="seg-btn rec-preset" data-p="all">全部</button>
+                    </div>
+                    <div class="rec-range">
+                        <input id="recFrom" type="date"><span>至</span><input id="recTo" type="date">
+                    </div>
+                </div>
+                <div id="recBody" class="rec-body"></div>
+            </div>
+
+            <footer id="footer" class="footer no-drag">
                 <div id="dailyInputRow" class="input-row">
                     <input id="taskInput" type="text" placeholder="添加每日常规，回车确认">
+                    <input id="targetInput" class="target-in" type="number" min="1" max="1440" placeholder="计时(分)" title="想计时就填目标分钟数，留空 = 普通勾选">
                     <button id="addBtn" class="add-btn" title="添加">+</button>
                 </div>
-                <button id="openFormBtn" class="add-todo-btn hidden">+ 添加待办</button>
+                <button id="openFormBtn" class="add-todo-btn hidden" title="Ctrl+N">+ 添加待办</button>
                 <div class="footer-meta">
                     <span id="taskCount">0 项</span>
-                    <button id="clearCompletedBtn" class="link-btn hidden">清除已完成</button>
+                    <button id="clearCompletedBtn" class="link-btn hidden" title="Ctrl+Shift+C">清除已完成</button>
                 </div>
             </footer>
         </div>
@@ -260,15 +361,42 @@
                 <div class="field">
                     <span>优先级（可不选）</span>
                     <div class="toggles">
-                        <button type="button" id="fImportant" class="toggle">重要</button>
-                        <button type="button" id="fUrgent" class="toggle">紧急</button>
+                        <button type="button" id="fImportant" class="toggle" title="Alt+I">重要</button>
+                        <button type="button" id="fUrgent" class="toggle" title="Alt+U">紧急</button>
                     </div>
-                    <p class="hint">都不选也可以，只记截止时间、到点提醒即可。截止前 24 小时内会自动算作紧急；列表按「重要紧急 → 重要 → 紧急 → 其他」排，同组按截止时间。</p>
+                    <p class="hint">都不选也可以，只记截止时间、到点提醒即可。截止前 24 小时内会自动算作紧急。</p>
                 </div>
             </div>
             <div class="form-actions">
-                <button id="fCancel" class="btn ghost">取消</button>
-                <button id="fSave" class="btn primary">保存（Ctrl+Enter）</button>
+                <button id="fCancel" class="btn ghost">取消<kbd>Esc</kbd></button>
+                <button id="fSave" class="btn primary">保存<kbd>Ctrl ↵</kbd></button>
+            </div>
+        </div>
+
+        <!-- 快捷键一览（? 或右上角键盘图标打开，任意键关闭） -->
+        <div id="helpOverlay" class="help no-drag hidden">
+            <div class="help-card">
+                <h4>全局</h4>
+                <div class="help-row"><span>呼出 / 隐藏窗口（任何地方）</span><kbd>Ctrl Alt D</kbd></div>
+                <div class="help-row"><span>新建</span><kbd>Ctrl N</kbd></div>
+                <div class="help-row"><span>切换 常规 / 待办 / 记录</span><kbd>Ctrl 1 2 3</kbd></div>
+                <div class="help-row"><span>下一页 / 上一页</span><kbd>Ctrl (Shift) Tab</kbd></div>
+                <div class="help-row"><span>切换排序 / 记录范围</span><kbd>Ctrl L</kbd></div>
+                <div class="help-row"><span>置顶</span><kbd>Ctrl P</kbd></div>
+                <div class="help-row"><span>深色 / 浅色</span><kbd>Ctrl T</kbd></div>
+                <div class="help-row"><span>收起 / 展开</span><kbd>Ctrl M</kbd></div>
+                <div class="help-row"><span>隐藏到托盘</span><kbd>Ctrl W / Esc</kbd></div>
+                <div class="help-row"><span>清除已完成待办</span><kbd>Ctrl Shift C</kbd></div>
+                <h4>列表（先按 Esc 离开输入框）</h4>
+                <div class="help-row"><span>上下选择</span><kbd>↑ ↓ / J K</kbd></div>
+                <div class="help-row"><span>勾选完成</span><kbd>Space</kbd></div>
+                <div class="help-row"><span>编辑</span><kbd>Enter / F2</kbd></div>
+                <div class="help-row"><span>开始 / 停止计时</span><kbd>S</kbd></div>
+                <div class="help-row"><span>删除（按两次）</span><kbd>Delete</kbd></div>
+                <h4>待办表单</h4>
+                <div class="help-row"><span>保存</span><kbd>Ctrl Enter / Ctrl S</kbd></div>
+                <div class="help-row"><span>重要 / 紧急</span><kbd>Alt I / Alt U</kbd></div>
+                <div class="help-row"><span>取消</span><kbd>Esc</kbd></div>
             </div>
         </div>
     </div>

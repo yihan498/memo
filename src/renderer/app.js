@@ -1,29 +1,35 @@
 import { loadTheme, saveTheme, loadAlwaysOnTop } from './services/storeService.js';
 import { createTask, toggleTask, updateTask, deleteTask } from './services/taskManager.js';
-import { dateKey, rollover, pendingCheck, recentDays } from './services/dailyManager.js';
+import { dateKey, rollover, pendingCheck, pastCheckTime, recentDays, startTimer, stopTimer, applyTimers } from './services/dailyManager.js';
 import { Header } from './components/Header.js';
 import { TaskList } from './components/TaskList.js';
 import { TaskInput } from './components/TaskInput.js';
 import { TodoForm } from './components/TodoForm.js';
+import { Records } from './components/Records.js';
+import { timerHtml } from './components/TaskItem.js';
 import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, shortTime } from './services/todoSort.js';
 
 // 需要持久化的状态字段 → electron-store 的 key
-const PERSIST_KEYS = ['tasks', 'view', 'lastResetDate', 'dailyHistory', 'checkTime', 'lastNotifiedDate', 'todoSort'];
+const PERSIST_KEYS = ['tasks', 'view', 'lastResetDate', 'dailyHistory', 'checkTime', 'lastNotifiedDate', 'todoSort', 'todoLog'];
+const VIEWS = ['daily', 'todo', 'records'];
 
 const store = {
     get: (k, d) => window.electronAPI.getStoreValue(k, d),
     set: (k, v) => window.electronAPI.setStoreValue(k, v)
 };
 
+const isTyping = (el) => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
+
 class TodoWidgetApp {
     constructor() {
         this.state = {
             tasks: [],
-            view: 'daily',          // 'daily' 每日常规 | 'todo' 零碎待办
+            view: 'daily',          // 'daily' 每日常规 | 'todo' 零碎待办 | 'records' 记录
             lastResetDate: null,
             dailyHistory: {},
             checkTime: '21:30',     // 晚间检查时间
             todoSort: 'time',       // 待办排序：'time' 按时间 | 'priority' 按重要程度
+            todoLog: [],            // 待办完成日志（清除已完成后也保留，供记录页统计）
             lastNotifiedDate: null
         };
         this.currentTheme = 'dark';
@@ -37,8 +43,13 @@ class TodoWidgetApp {
             const v = await store.get(k, this.state[k]);
             if (v !== undefined && v !== null) this.state[k] = v;
         }
+        if (!VIEWS.includes(this.state.view)) this.state.view = 'daily';
         // 旧数据没有 type 字段，视为零碎待办
         this.state.tasks = (this.state.tasks || []).map(t => (t.type ? t : { ...t, type: 'todo' }));
+        // 把已勾选但还没进日志的待办补进日志
+        const logged = new Set(this.state.todoLog.map(l => l.id));
+        this.state.tasks.filter(t => t.type === 'todo' && t.completed && t.completedAt && !logged.has(t.id))
+            .forEach(t => this.state.todoLog.push(this.logEntry(t)));
 
         this.header = new Header({
             onThemeToggle: () => this.toggleTheme(),
@@ -48,13 +59,15 @@ class TodoWidgetApp {
         this.taskList = new TaskList('tasksList', {
             onToggle: (id) => this.handleToggleTask(id),
             onDelete: (id) => this.handleDeleteTask(id),
+            onTimer: (id) => this.handleTimer(id),
             onEditStart: (id) => this.handleEditStart(id),
-            onEditSave: (id, newText) => this.handleEditSave(id, newText),
-            onEditCancel: () => this.updateUI()
+            onEditSave: (id, text, min) => this.handleEditSave(id, text, min),
+            onEditCancel: () => this.updateUI(),
+            onRerender: () => this.updateUI()
         });
 
         this.taskInput = new TaskInput({
-            onAddTask: (text) => this.handleAddTask(text),
+            onAddTask: (text, min) => this.handleAddTask(text, min),
             onOpenForm: () => this.todoForm.open(),
             onClearCompleted: () => this.handleClearCompleted()
         });
@@ -63,17 +76,18 @@ class TodoWidgetApp {
             onSave: (id, attrs) => this.handleSaveTodo(id, attrs)
         });
 
+        this.records = new Records(() => this.state);
+
         this.setupTabs();
         this.setupDailyBar();
-        document.querySelectorAll('.seg-btn').forEach(btn => btn.addEventListener('click', () => {
-            this.state.todoSort = btn.dataset.sort;
-            store.set('todoSort', this.state.todoSort);
-            this.updateUI();
-        }));
+        document.querySelectorAll('.seg-btn').forEach(btn => btn.addEventListener('click', () => this.setSort(btn.dataset.sort)));
         this.setupKeyboardShortcuts();
+        document.getElementById('helpBtn').addEventListener('click', () => this.toggleHelp());
+        document.getElementById('helpOverlay').addEventListener('click', () => this.toggleHelp(false));
 
         this.tick();
         setInterval(() => this.tick(), 30 * 1000);
+        setInterval(() => this.tickTimers(), 1000);
 
         this.updateUI();
         this.header.applyTheme(this.currentTheme);
@@ -104,27 +118,47 @@ class TodoWidgetApp {
 
         const pending = pendingCheck(this.state, now);
         if (pending) {
-            const names = pending.map(t => t.text).join('、');
-            window.electronAPI.notify(
-                `今天还有 ${pending.length} 项常规没做`,
-                names
-            );
+            window.electronAPI.notify(`今天还有 ${pending.length} 项常规没做`, pending.map(t => t.text).join('、'));
             this.state.lastNotifiedDate = dateKey(now);
             this.persist();
         }
     }
 
+    // 每秒：只刷新正在计时那一项的数字和进度条；达标时自动勾选
+    tickTimers() {
+        const running = this.state.tasks.filter(t => t.runningSince);
+        if (!running.length) return;
+        const { state, reached } = applyTimers(this.state);
+        if (reached.length) {
+            this.state = state;
+            reached.forEach(t => window.electronAPI.notify(`「${t.text}」已达标`, `今天已计时 ${t.targetMin} 分钟，可以停下了`));
+            this.persist();
+            if (!document.querySelector('.edit-input')) this.updateUI();
+            return;
+        }
+        running.forEach(t => {
+            const box = document.querySelector(`[data-task-id="${t.id}"] .timer`);
+            if (box) box.innerHTML = timerHtml(t);
+        });
+    }
+
     // --- 视图切换 ---
 
+    setView(view) {
+        this.state.view = view;
+        store.set('view', view);
+        this.updateUI();
+        this.taskInput.focus();
+    }
+
+    setSort(sort) {
+        this.state.todoSort = sort;
+        store.set('todoSort', sort);
+        this.updateUI();
+    }
+
     setupTabs() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.state.view = btn.dataset.view;
-                store.set('view', this.state.view);
-                this.updateUI();
-                this.taskInput.focus();
-            });
-        });
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => this.setView(btn.dataset.view)));
     }
 
     setupDailyBar() {
@@ -136,14 +170,20 @@ class TodoWidgetApp {
             // 改了时间允许今天按新时间再提醒一次
             this.state.lastNotifiedDate = null;
             this.persist();
+            this.updateUI();
         });
     }
 
     // --- Actions ---
 
-    handleAddTask(text) {
+    logEntry(t) {
+        return { id: t.id, text: t.text, completedAt: t.completedAt, dueAt: t.dueAt || null };
+    }
+
+    handleAddTask(text, targetMin = null) {
         try {
             this.state = createTask(this.state, text, this.state.view);
+            if (targetMin) this.state = updateTask(this.state, this.state.tasks[0].id, { targetMin, sessions: [], runningSince: null });
             this.persist();
             this.updateUI();
             setTimeout(() => {
@@ -157,13 +197,25 @@ class TodoWidgetApp {
 
     handleToggleTask(id) {
         this.state = toggleTask(this.state, id);
-        this.persist();
         const task = this.state.tasks.find(t => t.id === id);
+        if (task && task.type === 'todo') {
+            this.state.todoLog = this.state.todoLog.filter(l => l.id !== id);
+            if (task.completed) this.state.todoLog.push(this.logEntry(task));
+        }
+        this.persist();
         const el = document.querySelector(`[data-task-id="${id}"]`);
         if (el && task && task.completed) {
             el.classList.add('task-complete');
             setTimeout(() => el.classList.remove('task-complete'), 300);
         }
+        this.updateUI();
+    }
+
+    handleTimer(id) {
+        const task = this.state.tasks.find(t => t.id === id);
+        if (!task || !task.targetMin) return;
+        this.state = task.runningSince ? stopTimer(this.state, id) : startTimer(this.state, id);
+        this.persist();
         this.updateUI();
     }
 
@@ -186,7 +238,7 @@ class TodoWidgetApp {
         const task = this.state.tasks.find(t => t.id === id);
         if (!task) return;
         if (task.type === 'todo') this.todoForm.open(task);
-        else this.taskList.enableEditing(id, task.text);
+        else this.taskList.enableEditing(id, task.text, task.targetMin);
     }
 
     handleSaveTodo(id, attrs) {
@@ -200,15 +252,19 @@ class TodoWidgetApp {
         this.updateUI();
     }
 
-    handleEditSave(id, newText) {
+    handleEditSave(id, newText, minRaw) {
         if (newText.trim() !== '') {
-            this.state = updateTask(this.state, id, { text: newText });
+            const min = parseInt(minRaw, 10);
+            const task = this.state.tasks.find(t => t.id === id);
+            const attrs = { text: newText, targetMin: min > 0 ? min : null };
+            if (!attrs.targetMin && task && task.runningSince) this.state = stopTimer(this.state, id);
+            this.state = updateTask(this.state, id, attrs);
             this.persist();
         }
         this.updateUI();
     }
 
-    // 只清理零碎待办里已完成的；每日常规不会被清掉
+    // 只清理零碎待办里已完成的；每日常规不会被清掉（完成日志保留）
     handleClearCompleted() {
         const done = this.state.tasks.filter(t => t.type === 'todo' && t.completed);
         if (done.length === 0) return;
@@ -229,10 +285,16 @@ class TodoWidgetApp {
         this.header.applyTheme(this.currentTheme);
     }
 
+    toggleHelp(force) {
+        const el = document.getElementById('helpOverlay');
+        el.classList.toggle('hidden', force === undefined ? !el.classList.contains('hidden') : !force);
+    }
+
     // --- Render ---
 
     updateUI() {
         const view = this.state.view;
+        const isRecords = view === 'records';
         let visible = this.state.tasks.filter(t => t.type === view);
         let groupOf = null;
         if (view === 'todo') {
@@ -243,27 +305,32 @@ class TodoWidgetApp {
             } else {
                 visible = sortTodos(visible, now);
                 groupOf = t => t.completed
-                ? { key: 'qdone', label: '已完成' }
-                : { key: 'q' + quadrantOf(t, now), label: QUADRANTS[quadrantOf(t, now)].label };
+                    ? { key: 'qdone', label: '已完成' }
+                    : { key: 'q' + quadrantOf(t, now), label: QUADRANTS[quadrantOf(t, now)].label };
             }
         }
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.view === view);
+            const c = btn.querySelector('.tab-count');
+            if (!c) return;
             const n = this.state.tasks.filter(t => t.type === btn.dataset.view && !t.completed).length;
-            btn.querySelector('.tab-count').textContent = n > 0 ? n : '';
+            c.textContent = n > 0 ? n : '';
         });
+
+        this.taskInput.setView(view);
+        document.getElementById('listWrap').classList.toggle('hidden', isRecords);
+        document.getElementById('recordsView').classList.toggle('hidden', !isRecords);
+        this.renderDailyBar(view === 'daily');
+        document.getElementById('todoBar').classList.toggle('hidden', view !== 'todo');
+        if (isRecords) { this.records.render(); return; }
 
         document.getElementById('emptyTitle').textContent =
             view === 'daily' ? '还没有每日常规' : '没有待办，清爽！';
         document.getElementById('emptySub').textContent =
-            view === 'daily' ? '在下方输入框添加，每天 0 点自动重置' : '点下方「+ 添加待办」填写事项与时间';
-        this.taskInput.setView(view);
-
-        this.renderDailyBar(view === 'daily');
-        document.getElementById('todoBar').classList.toggle('hidden', view !== 'todo');
+            view === 'daily' ? '在下方输入，想计时就在右边填分钟数' : '点下方「+ 添加待办」或按 Ctrl+N';
         document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === this.state.todoSort));
-        this.taskList.render(visible, groupOf);
+        this.taskList.render(visible, groupOf, { late: pastCheckTime(this.state) });
         this.taskList.updateEmptyState(visible.length);
         this.taskInput.updateStats(visible, view);
     }
@@ -296,29 +363,63 @@ class TodoWidgetApp {
         for (const k of PERSIST_KEYS) await store.set(k, this.state[k]);
     }
 
-    // --- Shortcuts ---
+    // --- Shortcuts（? 查看全部） ---
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
             const mod = e.ctrlKey || e.metaKey;
+            const k = e.key.toLowerCase();
+            const help = document.getElementById('helpOverlay');
+            if (!help.classList.contains('hidden')) { this.toggleHelp(false); e.preventDefault(); return; }
             if (this.todoForm.isOpen) return;
-            if (mod && e.key === 'n') {
+            const typing = isTyping(document.activeElement);
+
+            // 全局（任何时候）
+            if (mod && k === 'n') {
                 e.preventDefault();
-                if (this.state.view === 'todo') this.todoForm.open(); else this.taskInput.focus();
+                if (this.state.view === 'todo') this.todoForm.open();
+                else { if (this.state.view !== 'daily') this.setView('daily'); this.taskInput.focus(); }
+                return;
             }
-            if (e.key === 'Escape') {
-                const inputEl = document.getElementById('taskInput');
-                if (inputEl && inputEl.value) inputEl.value = '';
-            }
-            if (mod && e.shiftKey && e.key === 'C') { e.preventDefault(); this.handleClearCompleted(); }
-            if (mod && e.key === 't') { e.preventDefault(); this.toggleTheme(); }
-            // Ctrl+Tab 切换 每日/待办
+            if (mod && ['1', '2', '3'].includes(e.key)) { e.preventDefault(); this.setView(VIEWS[Number(e.key) - 1]); return; }
             if (e.ctrlKey && e.key === 'Tab') {
                 e.preventDefault();
-                this.state.view = this.state.view === 'daily' ? 'todo' : 'daily';
-                store.set('view', this.state.view);
-                this.updateUI();
+                const i = VIEWS.indexOf(this.state.view);
+                this.setView(VIEWS[(i + (e.shiftKey ? VIEWS.length - 1 : 1)) % VIEWS.length]);
+                return;
             }
+            if (mod && k === 't') { e.preventDefault(); this.toggleTheme(); return; }
+            if (mod && k === 'p') { e.preventDefault(); document.getElementById('alwaysOnTopBtn').click(); return; }
+            if (mod && k === 'm') { e.preventDefault(); this.header.toggleCompactMode(); return; }
+            if (mod && k === 'w') { e.preventDefault(); window.electronAPI.minimizeWindow(); return; }
+            if (mod && k === 'l' && this.state.view === 'todo') { e.preventDefault(); this.setSort(this.state.todoSort === 'time' ? 'priority' : 'time'); return; }
+            if (mod && k === 'l' && this.state.view === 'records') { e.preventDefault(); this.records.cyclePreset(); return; }
+            if (mod && e.shiftKey && k === 'c') { e.preventDefault(); document.getElementById('clearCompletedBtn').click(); return; }
+
+            if (e.key === 'Escape') {
+                if (typing && document.activeElement.value) { document.activeElement.value = ''; return; }
+                if (typing) { document.activeElement.blur(); return; }
+                if (this.taskList.selectedId) { this.taskList.select(null); return; }
+                window.electronAPI.minimizeWindow();
+                return;
+            }
+            // 每日输入框为空时按 ↓ 直接进入列表
+            if (typing && e.key === 'ArrowDown' && !document.activeElement.value) {
+                e.preventDefault(); document.activeElement.blur(); this.taskList.move(1); return;
+            }
+            if (typing) return;
+
+            // 列表操作（不在输入框里时）
+            if (e.key === '?' || e.key === 'F1') { e.preventDefault(); this.toggleHelp(true); return; }
+            if (this.state.view === 'records') return;
+            const sel = this.taskList.selectedId;
+            if (e.key === 'ArrowDown' || k === 'j') { e.preventDefault(); this.taskList.move(1); return; }
+            if (e.key === 'ArrowUp' || k === 'k') { e.preventDefault(); this.taskList.move(-1); return; }
+            if (!sel) return;
+            if (e.key === ' ' || e.key === 'x') { e.preventDefault(); this.handleToggleTask(sel); return; }
+            if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); this.handleEditStart(sel); return; }
+            if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); this.taskList.requestDelete(sel); return; }
+            if (k === 's') { e.preventDefault(); this.handleTimer(sel); }
         });
     }
 }
