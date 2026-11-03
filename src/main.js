@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage, Notification } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -6,6 +6,9 @@ const Store = require('electron-store');
 app.disableHardwareAcceleration();
 app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
+
+// Windows 通知需要 AppUserModelId
+app.setAppUserModelId('com.tianyihan.desktop-todo');
 
 // Initialize store for settings
 const store = new Store({
@@ -44,7 +47,9 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      // 隐藏到托盘时定时器照常跑（跨天重置、晚间检查）
+      backgroundThrottling: false
     }
   });
 
@@ -65,9 +70,10 @@ function createWindow() {
       store.set('windowBounds', bounds);
     }
 
+    // 关闭 = 隐藏到托盘，保证提醒继续工作；真正退出走托盘菜单
     if (!isQuitting) {
-      isQuitting = true;
-      app.quit();
+      event.preventDefault();
+      mainWindow.hide();
     }
   });
 
@@ -100,11 +106,11 @@ function createTray() {
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: 'Show App',
+        label: '显示',
         click: () => mainWindow.show()
       },
       {
-        label: 'Quit',
+        label: '退出',
         click: () => {
           isQuitting = true;
           app.quit();
@@ -112,7 +118,7 @@ function createTray() {
       }
     ]);
 
-    tray.setToolTip('flost8');
+    tray.setToolTip('今日事');
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {
@@ -149,6 +155,11 @@ if (!gotTheLock) {
     app.dock.hide();
   }
   
+  // 打包安装后开机自启（开发模式下不注册，避免把 electron.exe 加进启动项）
+  if (app.isPackaged) {
+    app.setLoginItemSettings({ openAtLogin: true });
+  }
+
   createWindow();
   createTray();
 
@@ -206,6 +217,22 @@ ipcMain.handle('set-compact-mode', (event, isCompact) => {
     mainWindow.setMinimumSize(280, 400);
   }
 });
+
+ipcMain.handle('notify', (event, title, body) => {
+  if (!Notification.isSupported()) return false;
+  const n = new Notification({
+    title,
+    body,
+    icon: path.join(__dirname, '..', 'assets', 'icon-png.png')
+  });
+  n.on('click', () => {
+    if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
+  });
+  n.show();
+  return true;
+});
+
+app.on('before-quit', () => { isQuitting = true; });
 
 ipcMain.handle('get-screen-size', () => {
   const primaryDisplay = screen.getPrimaryDisplay();

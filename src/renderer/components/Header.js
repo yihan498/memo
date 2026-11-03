@@ -79,19 +79,19 @@ export class Header {
         setTimeout(() => {
             switch(this.revolveIndex) {
                 case 0:
-                    this.brandTitle.innerText = "flost8";
+                    this.brandTitle.innerText = "今日事";
                     break;
                 case 1:
                     const dateOpts = { month: 'long', day: 'numeric', year: 'numeric' };
-                    this.brandTitle.innerText = new Date().toLocaleDateString(undefined, dateOpts);
+                    this.brandTitle.innerText = new Date().toLocaleDateString('zh-CN', dateOpts);
                     break;
                 case 2:
                     const timeOpts = { hour: 'numeric', minute: '2-digit' };
-                    this.brandTitle.innerText = new Date().toLocaleTimeString(undefined, timeOpts);
+                    this.brandTitle.innerText = new Date().toLocaleTimeString('zh-CN', timeOpts);
                     break;
                 case 3:
                     const count = this.callbacks.getTaskCount ? this.callbacks.getTaskCount() : 0;
-                    this.brandTitle.innerText = `${count} pending`;
+                    this.brandTitle.innerText = `${count} 项未完成`;
                     break;
             }
             

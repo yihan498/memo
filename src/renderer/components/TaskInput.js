@@ -46,7 +46,7 @@ export class TaskInput {
         this.taskInput.value = '';
     }
 
-    updateStats(tasks) {
+    updateStats(tasks, view = 'todo') {
         if (!Array.isArray(tasks)) return;
 
         const total = tasks.length;
@@ -54,17 +54,13 @@ export class TaskInput {
         const remaining = total - completed;
 
         if (this.taskCountElement) {
-            if (total === 0) {
-                this.taskCountElement.textContent = '0 tasks';
-            } else if (completed === 0) {
-                this.taskCountElement.textContent = `${total} ${total === 1 ? 'task' : 'tasks'}`;
-            } else {
-                this.taskCountElement.textContent = `${remaining} of ${total} remaining`;
-            }
+            this.taskCountElement.textContent = total === 0
+                ? '0 项'
+                : `剩余 ${remaining} / 共 ${total} 项`;
         }
 
         if (this.clearCompletedBtn) {
-            if (completed > 0) {
+            if (completed > 0 && view === 'todo') {
                 this.clearCompletedBtn.classList.remove('hidden');
             } else {
                 this.clearCompletedBtn.classList.add('hidden');

@@ -1,6 +1,6 @@
 import { generateId } from '../utils/helpers.js';
 
-export function createTask(state = {}, text) {
+export function createTask(state = {}, text, type = 'todo') {
   if (typeof text !== 'string') throw new Error('text must be a string');
   const trimmed = text.trim();
   if (!trimmed) throw new Error('text is required');
@@ -8,6 +8,7 @@ export function createTask(state = {}, text) {
   const task = {
     id: generateId(),
     text: trimmed,
+    type: type === 'daily' ? 'daily' : 'todo',
     completed: false,
     createdAt: new Date().toISOString(),
     completedAt: null

@@ -28,7 +28,7 @@ export function createTaskElement(task) {
 
     const textContainer = document.createElement('div');
     textContainer.className = 'flex-1 min-w-0 task-text-container cursor-text';
-    textContainer.title = 'Double-click to edit';
+    textContainer.title = '双击编辑';
 
     const p = document.createElement('p');
     p.className = 'text-sm text-gray-800 dark:text-gray-200 break-words leading-relaxed';
@@ -37,16 +37,23 @@ export function createTaskElement(task) {
 
     textContainer.appendChild(p);
 
+    if (task.type === 'daily' && task.missedLast && !task.completed) {
+        const badge = document.createElement('span');
+        badge.className = 'missed-badge';
+        badge.textContent = '上次未完成';
+        textContainer.appendChild(badge);
+    }
+
     if (task.completed && task.completedAt) {
         const small = document.createElement('p');
         small.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1';
-        small.textContent = 'Completed ' + new Date(task.completedAt).toLocaleString();
+        small.textContent = '完成于 ' + new Date(task.completedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
         textContainer.appendChild(small);
     }
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-btn opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-500/20 transition-all';
-    deleteBtn.title = 'Delete task';
+    deleteBtn.title = '删除';
     deleteBtn.innerHTML = '<svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
 
     inner.appendChild(label);

@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setCompactMode: (isCompact) => ipcRenderer.invoke('set-compact-mode', isCompact),
   getScreenSize: () => ipcRenderer.invoke('get-screen-size'),
   
+  // 系统通知
+  notify: (title, body) => ipcRenderer.invoke('notify', title, body),
+
   // Platform info
   platform: process.platform
 });

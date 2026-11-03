@@ -1,7 +1,7 @@
 {
-  "name": "flost8",
+  "name": "desktop-todo",
   "version": "2.0.0",
-  "description": "A lightweight, always-visible desktop to-do list widget",
+  "description": "每日常规 + 零碎待办 桌面提醒（基于 flost8 改造）",
   "main": "src/main.js",
   "author": "Aryan Singh",
   "license": "MIT",
@@ -10,9 +10,8 @@
     "dev": "electron . --dev",
     "build:electron-builder": "electron-builder",
     "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux",
-    "dist": "npm run build"
+    "dist": "npm run build",
+    "test": "node tests/daily.test.mjs"
   },
   "keywords": [
     "electron",
@@ -31,8 +30,8 @@
     "electron-store": "^8.1.0"
   },
   "build": {
-    "appId": "com.example.flost8",
-    "productName": "flost8",
+    "appId": "com.tianyihan.desktop-todo",
+    "productName": "desktop-todo",
     "artifactName": "${productName}.${ext}",
     "directories": {
       "output": "dist"
@@ -46,15 +45,6 @@
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "assets/icon-png.png",
-      "category": "public.app-category.productivity"
-    },
-    "linux": {
-      "target": "AppImage",
-      "category": "Office"
     },
     "nsis": {
       "oneClick": false,
