@@ -1,0 +1,67 @@
+{
+  "name": "flost8",
+  "version": "2.0.0",
+  "description": "A lightweight, always-visible desktop to-do list widget",
+  "main": "src/main.js",
+  "author": "Aryan Singh",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build:electron-builder": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "dist": "npm run build"
+  },
+  "keywords": [
+    "electron",
+    "todo",
+    "widget",
+    "desktop",
+    "productivity"
+  ],
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.0",
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "tailwindcss": "^4.2.0"
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0"
+  },
+  "build": {
+    "appId": "com.example.flost8",
+    "productName": "flost8",
+    "artifactName": "${productName}.${ext}",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "compression": "store",
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon-png.png",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "extraMetadata": {
+      "main": "src/main.js"
+    }
+  }
+}
