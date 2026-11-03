@@ -4,268 +4,251 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>今日事</title>
-    <link href="styles.css" rel="stylesheet">
-    <script>
-        // Custom config for glass effect colors if needed or kept in CSS
-        // Since we moved to compiled CSS, we might need to ensure these custom colors are in the input or just use what we have.
-        // Wait, the CDN config had 'glass' colors.
-        // I need to ensure the compiled CSS includes these. 
-        // The command I ran only scans existing Utility classes. 
-        // If 'glass-light' or 'bg-glass-light' are used, they won't be generated if not in standard Tailwind config.
-        // The previous index.html had a script tag defining config.
-    </script>
     <style>
-        /* Custom styles for glass effect and scrollbar */
-        .glass-light {
-            background: rgba(240, 248, 255, 0.15);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* 极简黑白 + 橙。所有颜色只从这里的变量取 */
+        :root {
+            --bg: #FFFFFF;
+            --fg: #111111;
+            --muted: #8A8A8A;
+            --line: #E8E8E8;
+            --soft: #F5F5F5;
+            --accent: #FF6A00;
+            --accent-soft: rgba(255, 106, 0, 0.12);
+            --on-accent: #FFFFFF;
+            color-scheme: light;
         }
-        
-        .glass-dark {
-            background: rgba(10, 15, 30, 0.85);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .drag-region {
-            -webkit-app-region: drag;
-        }
-        
-        .no-drag {
-            -webkit-app-region: no-drag;
-        }
-        
-        /* Custom scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.3);
-            border-radius: 3px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(156, 163, 175, 0.5);
-        }
-        
-        /* Animation classes */
-        .slide-in {
-            animation: slideIn 0.2s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .fade-out {
-            animation: fadeOut 0.2s ease-in;
-        }
-        
-        @keyframes fadeOut {
-            from {
-                opacity: 1;
-                transform: scale(1);
-            }
-            to {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-        }
-        
-        /* Task completion animation */
-        .task-complete {
-            animation: taskComplete 0.3s ease-in-out;
-        }
-        
-        @keyframes taskComplete {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-        
-        /* --- 今日事：新增样式（styles.css 为预编译 Tailwind，新类写在这里） --- */
-        .hidden { display: none !important; }
-        .tab-bar { display: flex; gap: 6px; padding: 0 16px 6px; }
-        .tab-btn {
-            flex: 1; padding: 6px 0; font-size: 12px; border-radius: 8px; border: none; cursor: pointer;
-            background: rgba(0,0,0,0.05); color: #6b7280; transition: all .2s;
-        }
-        html.dark .tab-btn { background: rgba(255,255,255,0.05); color: #9ca3af; }
-        .tab-btn.active { background: linear-gradient(90deg,#3b82f6,#a855f7); color: #fff; }
-        html.dark .tab-btn.active { color: #fff; background: linear-gradient(90deg,#3b82f6,#a855f7); }
-        .tab-count { font-size: 10px; opacity: .85; margin-left: 2px; }
-        .daily-bar { padding: 2px 18px 4px; font-size: 11px; color: #6b7280; }
-        html.dark .daily-bar { color: #9ca3af; }
-        .daily-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-        .daily-progress { font-weight: 600; }
-        .daily-dots { display: flex; gap: 5px; }
-        .day-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(156,163,175,0.35); cursor: default; }
-        .day-dot.done { background: #22c55e; }
-        .day-dot.missed { background: #ef4444; }
-        .day-dot.today { background: transparent; border: 1.5px solid #3b82f6; width: 7px; height: 7px; }
-        .daily-check { cursor: pointer; }
-        .check-time {
-            font-size: 11px; background: transparent; border: none; color: inherit;
-            border-bottom: 1px dashed rgba(156,163,175,0.6); outline: none;
-        }
-        html.dark .check-time { color-scheme: dark; }
-        .missed-badge {
-            display: inline-block; margin-top: 4px; padding: 1px 6px; font-size: 10px; border-radius: 4px;
-            background: rgba(239,68,68,0.15); color: #ef4444;
+        html.dark {
+            --bg: #111111;
+            --fg: #EEEEEE;
+            --muted: #7C7C7C;
+            --line: #262626;
+            --soft: #1B1B1B;
+            --accent: #FF6A00;
+            --accent-soft: rgba(255, 106, 0, 0.16);
+            --on-accent: #111111;
+            color-scheme: dark;
         }
 
-        /* Fallback classes for Solo Leveling theme if Tailwind CLI misses them */
-        .from-blue-600 { --tw-gradient-from: #2563eb; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-        .to-purple-600 { --tw-gradient-to: #9333ea; }
-        .dark\:from-blue-400 { --tw-gradient-from: #60a5fa; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-        .dark\:to-purple-400 { --tw-gradient-to: #c084fc; }
-        .from-blue-500 { --tw-gradient-from: #3b82f6; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-        .to-purple-500 { --tw-gradient-to: #a855f7; }
-        .text-blue-500 { color: #3b82f6; }
-        .bg-blue-500\/20 { background-color: rgba(59, 130, 246, 0.2); }
-        .bg-clip-text { -webkit-background-clip: text; background-clip: text; }
-        .text-transparent { color: transparent; }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+            font-size: 13px; color: var(--fg); user-select: none;
+        }
+        button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
+        input, textarea, select { font: inherit; color: var(--fg); }
+        .hidden { display: none !important; }
+        .drag { -webkit-app-region: drag; }
+        .no-drag { -webkit-app-region: no-drag; }
+
+        #app {
+            position: relative; height: 100vh; display: flex; flex-direction: column;
+            background: var(--bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+        }
+
+        /* 标题栏：控制按钮常驻右上角 */
+        .titlebar { display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 6px 0 14px; flex-shrink: 0; }
+        .brand { display: flex; align-items: baseline; gap: 8px; }
+        .brand-name { font-size: 15px; font-weight: 700; letter-spacing: .5px; }
+        .brand-name::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 3px; }
+        .brand-date { font-size: 11px; color: var(--muted); }
+        .controls { display: flex; align-items: center; gap: 2px; }
+        .icon-btn { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); }
+        .icon-btn:hover { background: var(--soft); color: var(--fg); }
+        .icon-btn.on { color: var(--accent); }
+        .icon-btn.close:hover { background: var(--accent); color: var(--on-accent); }
+        .icon-btn svg { width: 14px; height: 14px; }
+
+        .main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+        /* 标签页 */
+        .tabs { display: flex; gap: 18px; padding: 0 14px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+        .tab-btn { padding: 6px 0 8px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .tab-btn:hover { color: var(--fg); }
+        .tab-btn.active { color: var(--fg); font-weight: 600; border-bottom-color: var(--accent); }
+        .tab-count { font-size: 11px; color: var(--accent); margin-left: 2px; }
+
+        /* 每日条 */
+        .daily-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px 4px; font-size: 11px; color: var(--muted); flex-shrink: 0; }
+        .daily-progress { font-weight: 600; color: var(--fg); margin-right: 8px; }
+        .daily-dots { display: inline-flex; gap: 4px; vertical-align: middle; }
+        .day-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+        .day-dot.done { background: var(--fg); }
+        .day-dot.missed { background: var(--accent); }
+        .day-dot.today { background: transparent; box-shadow: inset 0 0 0 1.5px var(--fg); }
+        .check-time { font-size: 11px; background: transparent; border: none; border-bottom: 1px dashed var(--muted); outline: none; width: 64px; color: var(--fg); }
+
+        /* 列表 */
+        .list-wrap { position: relative; flex: 1; min-height: 0; }
+        .list { height: 100%; overflow-y: auto; padding: 6px 8px 8px; }
+        .list::-webkit-scrollbar, .form-scroll::-webkit-scrollbar { width: 5px; }
+        .list::-webkit-scrollbar-thumb, .form-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+        .group-label { font-size: 11px; color: var(--muted); padding: 10px 6px 4px; letter-spacing: .5px; }
+        .group-label.q0 { color: var(--accent); font-weight: 600; }
+
+        .task { display: flex; align-items: flex-start; gap: 10px; padding: 8px 6px; border-radius: 8px; }
+        .task:hover { background: var(--soft); }
+        .check { padding-top: 1px; cursor: pointer; }
+        .check input { position: absolute; opacity: 0; pointer-events: none; }
+        .box { display: grid; place-items: center; width: 16px; height: 16px; border: 1.5px solid var(--muted); border-radius: 4px; }
+        .task.done .box { background: var(--fg); border-color: var(--fg); }
+        .box svg { width: 11px; height: 11px; color: var(--bg); }
+        .task-body { flex: 1; min-width: 0; cursor: text; }
+        .task-text { margin: 0; line-height: 1.45; word-break: break-word; user-select: text; }
+        .task.done .task-text { color: var(--muted); text-decoration: line-through; }
+        .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; font-size: 11px; color: var(--muted); }
+        .meta .due.soon { color: var(--accent); }
+        .meta .due.overdue { color: var(--accent); font-weight: 600; }
+        .tag { font-size: 10px; padding: 0 5px; border-radius: 3px; line-height: 16px; }
+        .tag.imp { background: var(--accent); color: var(--on-accent); }
+        .tag.urg { border: 1px solid var(--accent); color: var(--accent); line-height: 14px; }
+        .tag.missed { background: var(--accent-soft); color: var(--accent); }
+        .delete-btn { opacity: 0; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 5px; color: var(--muted); }
+        .task:hover .delete-btn { opacity: 1; }
+        .delete-btn:hover { color: var(--accent); background: var(--accent-soft); }
+        .delete-btn svg { width: 12px; height: 12px; }
+        .edit-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--accent); outline: none; padding: 0 0 2px; }
+
+        .empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); }
+        .empty p { margin: 2px 0; }
+        .empty .sub { font-size: 11px; }
+
+        /* 底部 */
+        .footer { padding: 8px 10px 8px; border-top: 1px solid var(--line); flex-shrink: 0; }
+        .input-row { display: flex; align-items: center; gap: 6px; background: var(--soft); border-radius: 8px; padding: 2px 4px 2px 10px; }
+        .input-row input { flex: 1; background: transparent; border: none; outline: none; padding: 7px 0; }
+        .input-row input::placeholder { color: var(--muted); }
+        .add-btn { width: 26px; height: 26px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 17px; line-height: 1; }
+        .add-todo-btn { width: 100%; padding: 8px; border-radius: 8px; background: var(--accent); color: var(--on-accent); font-weight: 600; }
+        .add-todo-btn:hover, .add-btn:hover { filter: brightness(1.08); }
+        .footer-meta { display: flex; justify-content: space-between; margin-top: 6px; padding: 0 2px; font-size: 11px; color: var(--muted); }
+        .link-btn:hover { color: var(--accent); }
+
+        /* 待办表单 */
+        .form-overlay { position: absolute; inset: 44px 0 0 0; background: var(--bg); z-index: 20; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+        .form-scroll { flex: 1; overflow-y: auto; padding: 12px 14px; }
+        .form-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+        .field { display: block; margin-bottom: 12px; }
+        .field > span { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+        .field textarea, .field input, .field select {
+            width: 100%; background: var(--soft); border: 1px solid transparent; border-radius: 6px; padding: 7px 8px; outline: none; resize: none;
+        }
+        .field textarea:focus, .field input:focus, .field select:focus { border-color: var(--accent); }
+        .req { color: var(--accent); }
+        .toggles { display: flex; gap: 8px; }
+        .toggle { flex: 1; padding: 7px 0; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+        .toggle.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+        .hint { font-size: 10px; color: var(--muted); margin: 5px 0 0; }
+        .form-actions { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); }
+        .btn { flex: 1; padding: 8px; border-radius: 8px; }
+        .btn.ghost { background: var(--soft); }
+        .btn.primary { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+
+        /* 动画 */
+        .slide-in { animation: slideIn .18s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        .fade-out { animation: fadeOut .2s ease-in forwards; }
+        @keyframes fadeOut { to { opacity: 0; transform: scale(.97); } }
+        .task-complete { animation: pop .3s ease-in-out; }
+        @keyframes pop { 50% { transform: scale(1.02); } }
     </style>
 </head>
-<body class="m-0 p-0 overflow-hidden select-none font-sans text-gray-800 dark:text-gray-100 bg-transparent">
-    <!-- Main Container with Premium Glass Effect -->
-    <div id="app" class="w-full h-screen flex flex-col rounded-2xl overflow-hidden transition-all duration-300 relative group">
-        
-        <!-- Gradient Border/Glow Container -->
-        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-purple-500/20 pointer-events-none opacity-50"></div>
-        
-        <!-- Background Layer -->
-        <div class="absolute inset-0 glass-bg backdrop-blur-xl z-0 transition-colors duration-300 bg-white/80 dark:bg-gray-900/80"></div>
+<body>
+    <div id="app">
+        <header class="titlebar drag">
+            <div class="brand">
+                <span class="brand-name">今日事</span>
+                <span id="brandDate" class="brand-date"></span>
+            </div>
+            <div class="controls no-drag">
+                <button id="alwaysOnTopBtn" class="icon-btn" title="置顶">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                </button>
+                <button id="themeBtn" class="icon-btn" title="深色 / 浅色">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+                <button id="compactBtn" class="icon-btn" title="收起 / 展开">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <button id="closeBtn" class="icon-btn close" title="隐藏到托盘">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </header>
 
-        <!-- Content Layer -->
-        <div class="relative z-10 flex flex-col h-full">
-            
-            <!-- Title Bar -->
-            <div id="titleBar" class="drag-region flex items-center justify-between p-4 pb-2">
-                <div class="flex items-center space-x-3 group/brand">
-                    <div class="relative">
-                        <div class="relative w-10 h-10 group-hover/brand:scale-110 transition-transform duration-300 flex items-center justify-center">
-                            <img src="../../assets/icon-png.png" class="w-full h-full object-contain scale-[1.3] drop-shadow-md" alt="flost8 logo">
-                        </div>
-                    </div>
-                    <div id="brandTextContainer" class="min-w-[80px] cursor-pointer no-drag group/text" title="Toggle Compact Mode">
-                        <h1 id="brandTitle" class="text-base font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 transition-all duration-300">今日事</h1>
-                    </div>
-                </div>
+        <div id="mainContentArea" class="main">
+            <nav class="tabs no-drag">
+                <button class="tab-btn" data-view="daily">每日常规<span class="tab-count"></span></button>
+                <button class="tab-btn" data-view="todo">零碎待办<span class="tab-count"></span></button>
+            </nav>
 
-                <!-- Window Controls -->
-                <div class="no-drag flex items-center space-x-2 bg-black/5 dark:bg-white/5 rounded-lg p-1 transition-opacity opacity-0 group-hover:opacity-100">
-                    <button id="alwaysOnTopBtn" class="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-95" title="Pin on Top">
-                        <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <line x1="12" y1="17" x2="12" y2="22" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></line>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"></path>
-                        </svg>
-                    </button>
-                    <button id="themeBtn" class="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-95" title="Toggle Theme">
-                         <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                    </button>
-                    <div class="w-px h-3 bg-gray-300 dark:bg-gray-700"></div>
-                    <button id="closeBtn" class="p-1.5 rounded-md hover:bg-red-500 hover:text-white transition-all active:scale-95 text-red-400">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+            <div id="dailyBar" class="daily-bar no-drag hidden">
+                <span>
+                    <span id="dailyProgress" class="daily-progress"></span>
+                    <span id="dailyDots" class="daily-dots"></span>
+                </span>
+                <label title="到这个时间还有没做完的，会弹系统通知">
+                    晚间检查 <input id="checkTimeInput" type="time" class="check-time">
+                </label>
+            </div>
+
+            <div class="list-wrap no-drag">
+                <div id="tasksList" class="list"></div>
+                <div id="emptyState" class="empty hidden">
+                    <p id="emptyTitle"></p>
+                    <p id="emptySub" class="sub"></p>
                 </div>
             </div>
-            
-            <!-- Main Content Area -->
-            <div id="mainContentArea" class="flex-1 flex flex-col overflow-hidden transition-opacity duration-300">
-                <!-- 视图切换 -->
-                <div class="tab-bar no-drag">
-                    <button class="tab-btn" data-view="daily">每日常规 <span class="tab-count"></span></button>
-                    <button class="tab-btn" data-view="todo">零碎待办 <span class="tab-count"></span></button>
-                </div>
-                <!-- 每日常规：进度 + 最近7天标记 + 检查时间 -->
-                <div id="dailyBar" class="daily-bar no-drag hidden">
-                    <div class="daily-row">
-                        <span id="dailyProgress" class="daily-progress"></span>
-                        <span id="dailyDots" class="daily-dots"></span>
-                    </div>
-                    <label class="daily-row daily-check" title="到这个时间还有没做完的，会弹系统通知">
-                        晚间检查
-                        <input id="checkTimeInput" type="time" class="check-time">
-                    </label>
-                </div>
-                <!-- Tasks List -->
-                <div class="flex-1 no-drag px-4 pb-2 overflow-hidden relative">
-                <!-- Top fade for smooth scrolling -->
-                <div class="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-white/80 to-transparent dark:from-gray-900/80 z-10 pointer-events-none"></div>
-                
-                <div id="tasksList" class="h-full overflow-y-auto custom-scrollbar space-y-2.5 pt-2 pb-20">
-                    <!-- Tasks will be dynamically inserted here -->
-                </div>
-                
-                <!-- Bottom fade -->
-                <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white/90 to-transparent dark:from-gray-900/90 z-10 pointer-events-none"></div>
 
-                <!-- Empty state -->
-                <div id="emptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-800/50 flex items-center justify-center mb-4 shadow-inner">
-                        <svg class="w-8 h-8 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
+            <footer class="footer no-drag">
+                <div id="dailyInputRow" class="input-row">
+                    <input id="taskInput" type="text" placeholder="添加每日常规，回车确认">
+                    <button id="addBtn" class="add-btn" title="添加">+</button>
+                </div>
+                <button id="openFormBtn" class="add-todo-btn hidden">+ 添加待办</button>
+                <div class="footer-meta">
+                    <span id="taskCount">0 项</span>
+                    <button id="clearCompletedBtn" class="link-btn hidden">清除已完成</button>
+                </div>
+            </footer>
+        </div>
+
+        <!-- 零碎待办：新建 / 编辑表单 -->
+        <div id="todoForm" class="form-overlay no-drag hidden">
+            <div class="form-scroll">
+                <div id="formTitle" class="form-title">新建待办</div>
+                <label class="field">
+                    <span>具体事项 <b class="req">*</b></span>
+                    <textarea id="fText" rows="3" placeholder="要做什么？"></textarea>
+                </label>
+                <label class="field">
+                    <span>计划时间（打算什么时候做）</span>
+                    <input id="fPlanned" type="datetime-local">
+                </label>
+                <label class="field">
+                    <span>截止时间</span>
+                    <input id="fDue" type="datetime-local">
+                </label>
+                <label class="field">
+                    <span>截止提醒</span>
+                    <select id="fRemind"></select>
+                </label>
+                <div class="field">
+                    <span>优先级（可不选）</span>
+                    <div class="toggles">
+                        <button type="button" id="fImportant" class="toggle">重要</button>
+                        <button type="button" id="fUrgent" class="toggle">紧急</button>
                     </div>
-                    <p id="emptyTitle" class="text-sm font-medium text-gray-500 dark:text-gray-400"></p>
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">在下方输入框添加</p>
+                    <p class="hint">都不选也可以，只记截止时间、到点提醒即可。截止前 24 小时内会自动算作紧急；列表按「重要紧急 → 重要 → 紧急 → 其他」排，同组按截止时间。</p>
                 </div>
             </div>
-            
-            <!-- Add Task & Footer (Floating) -->
-            <div class="no-drag absolute bottom-0 left-0 right-0 p-4 z-20">
-                 <div class="relative group/input">
-                    <div class="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl opacity-30 group-focus-within/input:opacity-100 transition-opacity duration-300 blur-[2px]"></div>
-                    <div class="relative flex items-center bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden">
-                        <input 
-                            id="taskInput" 
-                            type="text" 
-                            placeholder="添加…" 
-                            class="w-full px-4 py-3 bg-transparent text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 focus:outline-none"
-                        >
-                        <button id="addBtn" class="p-2 mr-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 hover:text-white hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 transition-all duration-300">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                             </svg>
-                        </button>
-                    </div>
-                 </div>
-                 
-                 <div class="flex justify-between items-center mt-2 px-2">
-                     <span id="taskCount" class="text-[10px] font-medium text-gray-400 dark:text-gray-500 tracking-wide">0 项</span>
-                     <div class="flex items-center space-x-3">
-                         <button id="clearCompletedBtn" class="hidden text-[10px] font-medium text-gray-400 hover:text-red-400 transition-colors uppercase tracking-wide">清除已完成</button>
-                         <span class="resize-handle cursor-nw-resize text-gray-300 dark:text-gray-600 hover:text-gray-500">
-                             <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><path d="M8 8H0V6H2V4H4V2H6V0H8V8Z"/></svg>
-                         </span>
-                     </div>
-                 </div>
-            </div>
-                 </div>
+            <div class="form-actions">
+                <button id="fCancel" class="btn ghost">取消</button>
+                <button id="fSave" class="btn primary">保存（Ctrl+Enter）</button>
             </div>
         </div>
     </div>
 
-        <script type="module" src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>

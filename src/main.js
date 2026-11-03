@@ -10,6 +10,9 @@ app.commandLine.appendSwitch('disable-software-rasterizer');
 // Windows 通知需要 AppUserModelId
 app.setAppUserModelId('com.tianyihan.desktop-todo');
 
+// 开发调试：TODO_DATA_DIR 指定独立数据目录，避免污染真实数据
+if (process.env.TODO_DATA_DIR) app.setPath('userData', process.env.TODO_DATA_DIR);
+
 // Initialize store for settings
 const store = new Store({
   defaults: {
@@ -210,8 +213,8 @@ ipcMain.handle('set-compact-mode', (event, isCompact) => {
   const bounds = mainWindow.getBounds();
   if (isCompact) {
     savedHeight = bounds.height;
-    mainWindow.setMinimumSize(280, 70);
-    mainWindow.setSize(bounds.width, 70, true);
+    mainWindow.setMinimumSize(280, 46);
+    mainWindow.setSize(bounds.width, 46, true);
   } else {
     mainWindow.setSize(bounds.width, savedHeight, true);
     mainWindow.setMinimumSize(280, 400);

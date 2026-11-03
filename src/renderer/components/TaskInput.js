@@ -1,76 +1,38 @@
+// 底部区域：每日页是快捷输入框，待办页是「+ 添加待办」按钮（打开表单）
 export class TaskInput {
     constructor(callbacks = {}) {
         this.callbacks = callbacks;
         this.taskInput = document.getElementById('taskInput');
-        this.addBtn = document.getElementById('addBtn');
-        this.taskCountElement = document.getElementById('taskCount');
-        this.clearCompletedBtn = document.getElementById('clearCompletedBtn');
+        this.inputRow = document.getElementById('dailyInputRow');
+        this.openFormBtn = document.getElementById('openFormBtn');
+        this.countEl = document.getElementById('taskCount');
+        this.clearBtn = document.getElementById('clearCompletedBtn');
 
-        this.attachHandlers();
-    }
-
-    attachHandlers() {
-        if (this.taskInput) {
-            this.taskInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && this.taskInput.value.trim()) {
-                    this.submitTask();
-                }
-            });
-            this.taskInput.addEventListener('focus', () => {
-                this.taskInput.select();
-            });
-        }
-
-        if (this.addBtn) {
-            this.addBtn.addEventListener('click', () => {
-                if (this.taskInput.value.trim()) {
-                    this.submitTask();
-                }
-            });
-        }
-
-        if (this.clearCompletedBtn) {
-            this.clearCompletedBtn.addEventListener('click', () => {
-                if (this.callbacks.onClearCompleted) {
-                    this.callbacks.onClearCompleted();
-                }
-            });
-        }
-    }
-
-    submitTask() {
-        const text = this.taskInput.value.trim();
-        if (this.callbacks.onAddTask) {
+        const submit = () => {
+            const text = this.taskInput.value.trim();
+            if (!text) return;
             this.callbacks.onAddTask(text);
-        }
-        this.taskInput.value = '';
+            this.taskInput.value = '';
+        };
+        this.taskInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+        document.getElementById('addBtn').addEventListener('click', submit);
+        this.openFormBtn.addEventListener('click', () => this.callbacks.onOpenForm());
+        this.clearBtn.addEventListener('click', () => this.callbacks.onClearCompleted());
     }
 
-    updateStats(tasks, view = 'todo') {
-        if (!Array.isArray(tasks)) return;
+    setView(view) {
+        this.inputRow.classList.toggle('hidden', view !== 'daily');
+        this.openFormBtn.classList.toggle('hidden', view !== 'todo');
+    }
 
+    updateStats(tasks, view) {
         const total = tasks.length;
         const completed = tasks.filter(t => t.completed).length;
-        const remaining = total - completed;
-
-        if (this.taskCountElement) {
-            this.taskCountElement.textContent = total === 0
-                ? '0 项'
-                : `剩余 ${remaining} / 共 ${total} 项`;
-        }
-
-        if (this.clearCompletedBtn) {
-            if (completed > 0 && view === 'todo') {
-                this.clearCompletedBtn.classList.remove('hidden');
-            } else {
-                this.clearCompletedBtn.classList.add('hidden');
-            }
-        }
+        this.countEl.textContent = total === 0 ? '0 项' : `剩余 ${total - completed} / 共 ${total} 项`;
+        this.clearBtn.classList.toggle('hidden', !(completed > 0 && view === 'todo'));
     }
 
     focus() {
-        if (this.taskInput) {
-            this.taskInput.focus();
-        }
+        if (!this.inputRow.classList.contains('hidden')) this.taskInput.focus();
     }
 }

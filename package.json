@@ -11,7 +11,7 @@
     "build:electron-builder": "electron-builder",
     "build:win": "electron-builder --win",
     "dist": "npm run build",
-    "test": "node tests/daily.test.mjs"
+    "test": "node tests/daily.test.mjs && node tests/todo.test.mjs"
   },
   "keywords": [
     "electron",
@@ -21,10 +21,8 @@
     "productivity"
   ],
   "devDependencies": {
-    "@tailwindcss/cli": "^4.2.0",
     "electron": "^27.0.0",
-    "electron-builder": "^24.6.4",
-    "tailwindcss": "^4.2.0"
+    "electron-builder": "^24.6.4"
   },
   "dependencies": {
     "electron-store": "^8.1.0"
