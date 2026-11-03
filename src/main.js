@@ -8,7 +8,7 @@ app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // Windows 通知需要 AppUserModelId
-app.setAppUserModelId('Daybook');
+app.setAppUserModelId('Memo');
 
 // 开发调试：TODO_DATA_DIR 指定独立数据目录，避免污染真实数据
 // 数据目录固定为 %APPDATA%/desktop-todo，改名 / 打包都不会丢数据
@@ -123,7 +123,7 @@ function createTray() {
       }
     ]);
 
-    tray.setToolTip('Daybook（Ctrl+Alt+D 呼出）');
+    tray.setToolTip('Memo（Ctrl+Alt+D 呼出）');
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {
