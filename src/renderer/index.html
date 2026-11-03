@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>今日事</title>
+    <title>Nudge</title>
     <style>
         /* 极简黑白 + 橙。所有颜色只从这里的变量取 */
         :root {
@@ -49,7 +49,7 @@
         /* 标题栏：控制按钮常驻右上角 */
         .titlebar { display: flex; align-items: center; justify-content: space-between; height: 44px; padding: 0 6px 0 14px; flex-shrink: 0; }
         .brand { display: flex; align-items: baseline; gap: 8px; }
-        .brand-name { font-size: 15px; font-weight: 700; letter-spacing: .5px; }
+        .brand-name { font-size: 16px; font-weight: 700; letter-spacing: .3px; }
         .brand-name::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 3px; }
         .brand-date { font-size: 11px; color: var(--muted); }
         .controls { display: flex; align-items: center; gap: 2px; }
@@ -96,6 +96,22 @@
         .task-body { flex: 1; min-width: 0; cursor: text; }
         .task-text { margin: 0; line-height: 1.45; word-break: break-word; user-select: text; }
         .task.done .task-text { color: var(--muted); text-decoration: line-through; }
+        /* 时间行：比标签更醒目 */
+        .when { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 4px; font-size: 12px; }
+        .w i { font-style: normal; font-size: 10px; color: var(--muted); margin-right: 4px; }
+        .w b { font-weight: 600; color: var(--fg); font-variant-numeric: tabular-nums; }
+        .w.plan b { font-weight: 500; }
+        .w.due.soon b, .w.due.overdue b { color: var(--accent); }
+        .w.due.overdue b { font-weight: 700; }
+        .task.done .w b { color: var(--muted); font-weight: 400; }
+        /* 排序切换 */
+        .seg { display: inline-flex; background: var(--soft); border-radius: 6px; padding: 2px; }
+        .seg-btn { padding: 3px 10px; border-radius: 4px; font-size: 11px; color: var(--muted); }
+        .seg-btn.active { background: var(--bg); color: var(--fg); font-weight: 600; box-shadow: 0 0 0 1px var(--line); }
+        /* 表单日期 + 周几 */
+        .dt-row { display: flex; align-items: center; gap: 8px; }
+        .dt-row input { flex: 1; min-width: 0; font-weight: 600; }
+        .wk { min-width: 30px; font-size: 13px; color: var(--accent); }
         .meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 3px; font-size: 11px; color: var(--muted); }
         .meta .due.soon { color: var(--accent); }
         .meta .due.overdue { color: var(--accent); font-weight: 600; }
@@ -157,7 +173,7 @@
     <div id="app">
         <header class="titlebar drag">
             <div class="brand">
-                <span class="brand-name">今日事</span>
+                <span class="brand-name">Nudge</span>
                 <span id="brandDate" class="brand-date"></span>
             </div>
             <div class="controls no-drag">
@@ -192,6 +208,14 @@
                 </label>
             </div>
 
+            <div id="todoBar" class="daily-bar no-drag hidden">
+                <span>排序</span>
+                <div class="seg">
+                    <button class="seg-btn" data-sort="time">按时间</button>
+                    <button class="seg-btn" data-sort="priority">按重要程度</button>
+                </div>
+            </div>
+
             <div class="list-wrap no-drag">
                 <div id="tasksList" class="list"></div>
                 <div id="emptyState" class="empty hidden">
@@ -223,11 +247,11 @@
                 </label>
                 <label class="field">
                     <span>计划时间（打算什么时候做）</span>
-                    <input id="fPlanned" type="datetime-local">
+                    <div class="dt-row"><input id="fPlanned" type="datetime-local"><b id="fPlannedWk" class="wk"></b></div>
                 </label>
                 <label class="field">
                     <span>截止时间</span>
-                    <input id="fDue" type="datetime-local">
+                    <div class="dt-row"><input id="fDue" type="datetime-local"><b id="fDueWk" class="wk"></b></div>
                 </label>
                 <label class="field">
                     <span>截止提醒</span>

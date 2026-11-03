@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { sortTodos, quadrantOf, dueState, shortTime, dueReminders } from '../src/renderer/services/todoSort.js';
+import { sortTodos, sortTodosByTime, dayGroup, weekday, quadrantOf, dueState, shortTime, dueReminders } from '../src/renderer/services/todoSort.js';
 
 const now = new Date(2026, 10, 3, 12, 0).getTime();
 const mk = (text, o = {}) => ({ id: text, text, completed: false, createdAt: '2026-11-01T00:00:00Z', ...o });
@@ -30,8 +30,22 @@ const list = [
 assert.deepEqual(sortTodos(list, now).map(t => t.text),
     ['重要且急', '重要早截止', '重要晚截止', '重要无截止', '急', '杂事', '已完成']);
 
-assert.equal(shortTime('2026-11-05T18:00', new Date(now)), '11/05 18:00');
-assert.equal(shortTime('2027-01-02T08:05', new Date(now)), '2027/01/02 08:05');
+assert.equal(shortTime('2026-11-05T18:00', new Date(now)), '11/05 周四 18:00');
+assert.equal(shortTime('2027-01-02T08:05', new Date(now)), '2027/01/02 周六 08:05');
+assert.equal(weekday('2026-11-03T00:00'), '周二');
+
+// 按时间排序：截止优先、其次计划时间、无时间在后
+const tl = [
+    mk('无时间', { important: true }),
+    mk('后天截止', { dueAt: '2026-11-05T09:00' }),
+    mk('今天计划', { plannedAt: '2026-11-03T20:00' }),
+    mk('过期', { dueAt: '2026-11-02T09:00' }),
+    mk('明天截止', { dueAt: '2026-11-04T09:00' })
+];
+assert.deepEqual(sortTodosByTime(tl, now).map(t => t.text), ['过期', '今天计划', '明天截止', '后天截止', '无时间']);
+assert.deepEqual(sortTodosByTime(tl, now).map(t => dayGroup(t, now).label),
+    ['已过期', '今天 · 11/03 周二', '明天 · 11/04 周三', '后天 · 11/05 周四', '未定时间']);
+assert.equal(dayGroup(mk('x', { dueAt: '2026-11-08T09:00' }), now).label, '11/08 周日');
 assert.equal(shortTime(null), '');
 
 // 截止提醒

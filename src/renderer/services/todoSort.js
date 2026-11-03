@@ -58,14 +58,59 @@ export function sortTodos(tasks, now = Date.now()) {
     return open.concat(done);
 }
 
-/** 'YYYY-MM-DDTHH:mm' → '11/05 18:00'（今年省略年份） */
+const WEEK = '日一二三四五六';
+const p2 = n => String(n).padStart(2, '0');
+
+/** '2026-11-05T18:00' → '周四' */
+export function weekday(v) {
+    const ms = toMs(v);
+    return ms === null ? '' : '周' + WEEK[new Date(ms).getDay()];
+}
+
+/** 'YYYY-MM-DDTHH:mm' → '11/05 周四 18:00'（今年省略年份） */
 export function shortTime(v, now = new Date()) {
     const ms = toMs(v);
     if (ms === null) return '';
     const d = new Date(ms);
-    const p = n => String(n).padStart(2, '0');
-    const md = `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-    return d.getFullYear() === now.getFullYear() ? md : `${d.getFullYear()}/${md}`;
+    const md = `${p2(d.getMonth() + 1)}/${p2(d.getDate())} ${weekday(v)} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    return d.getFullYear() === new Date(now).getFullYear() ? md : `${d.getFullYear()}/${md}`;
+}
+
+/** 按时间排序用的时间点：优先截止时间，没有则用计划时间 */
+export function timeKey(task) {
+    const due = toMs(task.dueAt);
+    return due !== null ? due : toMs(task.plannedAt);
+}
+
+/** 按时间排序：时间早的在前，没时间的在后；同一时间按重要程度 */
+export function sortTodosByTime(tasks, now = Date.now()) {
+    const open = tasks.filter(t => !t.completed);
+    const done = tasks.filter(t => t.completed);
+    open.sort((a, b) =>
+        cmpNullableAsc(timeKey(a), timeKey(b)) ||
+        quadrantOf(a, now) - quadrantOf(b, now) ||
+        String(a.createdAt).localeCompare(String(b.createdAt))
+    );
+    done.sort((a, b) => String(b.completedAt).localeCompare(String(a.completedAt)));
+    return open.concat(done);
+}
+
+function startOfDay(ms) {
+    const d = new Date(ms);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+/** 按时间排序时的分组：已过期 / 今天 / 明天 / 后天 / 11/08 周日 / 未定时间 / 已完成 */
+export function dayGroup(task, now = Date.now()) {
+    if (task.completed) return { key: 'qdone', label: '已完成' };
+    const ms = timeKey(task);
+    if (ms === null) return { key: 'tnone', label: '未定时间' };
+    if (dueState(task, now) === 'overdue') return { key: 'toverdue', label: '已过期' };
+    const diff = Math.round((startOfDay(ms) - startOfDay(now)) / 86400000);
+    const d = new Date(ms);
+    const names = { 0: '今天', 1: '明天', 2: '后天' };
+    const date = `${p2(d.getMonth() + 1)}/${p2(d.getDate())} 周${WEEK[d.getDay()]}`;
+    return { key: 't' + startOfDay(ms), label: names[diff] ? `${names[diff]} · ${date}` : date };
 }
 
 // 截止提醒：remindBefore 为提前分钟数（0 = 截止时），null/undefined = 不提醒

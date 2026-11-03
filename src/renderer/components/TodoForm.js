@@ -1,5 +1,5 @@
 // 零碎待办的新建 / 编辑表单
-import { REMIND_OPTIONS } from '../services/todoSort.js';
+import { REMIND_OPTIONS, weekday } from '../services/todoSort.js';
 export class TodoForm {
     constructor({ onSave }) {
         this.onSave = onSave;
@@ -18,6 +18,8 @@ export class TodoForm {
         });
         this.fRemind.addEventListener('change', () => { this.remindTouched = true; });
         this.editingId = null;
+        this.wkPairs = [[this.fPlanned, document.getElementById('fPlannedWk')], [this.fDue, document.getElementById('fDueWk')]];
+        this.wkPairs.forEach(([inp]) => inp.addEventListener('input', () => this.updateWeekdays()));
 
         [this.fImportant, this.fUrgent].forEach(b => b.addEventListener('click', () => b.classList.toggle('on')));
         document.getElementById('fCancel').addEventListener('click', () => this.close());
@@ -42,8 +44,13 @@ export class TodoForm {
         this.fImportant.classList.toggle('on', !!(task && task.important));
         this.fUrgent.classList.toggle('on', !!(task && task.urgent));
         this.fText.style.borderColor = '';
+        this.updateWeekdays();
         this.el.classList.remove('hidden');
         this.fText.focus();
+    }
+
+    updateWeekdays() {
+        this.wkPairs.forEach(([inp, wk]) => { wk.textContent = weekday(inp.value); });
     }
 
     close() {

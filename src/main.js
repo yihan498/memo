@@ -8,10 +8,12 @@ app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // Windows 通知需要 AppUserModelId
-app.setAppUserModelId('com.tianyihan.desktop-todo');
+app.setAppUserModelId('Nudge');
 
 // 开发调试：TODO_DATA_DIR 指定独立数据目录，避免污染真实数据
+// 数据目录固定为 %APPDATA%/desktop-todo，改名 / 打包都不会丢数据
 if (process.env.TODO_DATA_DIR) app.setPath('userData', process.env.TODO_DATA_DIR);
+else app.setPath('userData', path.join(app.getPath('appData'), 'desktop-todo'));
 
 // Initialize store for settings
 const store = new Store({
@@ -121,7 +123,7 @@ function createTray() {
       }
     ]);
 
-    tray.setToolTip('今日事');
+    tray.setToolTip('Nudge');
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {

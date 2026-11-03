@@ -10,6 +10,7 @@ export function createTaskElement(task) {
     el.setAttribute('data-task-id', task.id);
 
     const meta = [];
+    const when = [];
     if (task.type === 'daily') {
         if (task.missedLast && !task.completed) meta.push('<span class="tag missed">上次未完成</span>');
     } else {
@@ -17,14 +18,14 @@ export function createTaskElement(task) {
             if (task.important) meta.push('<span class="tag imp">重要</span>');
             if (isUrgent(task)) meta.push('<span class="tag urg">紧急</span>');
         }
-        if (task.plannedAt) meta.push(`<span>计划 ${shortTime(task.plannedAt)}</span>`);
         if (task.dueAt) {
             const st = dueState(task);
-            const suffix = st === 'overdue' ? '（已过期）' : '';
-            meta.push(`<span class="due ${st || ''}">截止 ${shortTime(task.dueAt)}${suffix}</span>`);
+            const suffix = st === 'overdue' ? ' 已过期' : '';
+            when.push(`<span class="w due ${st || ''}"><i>截止</i><b>${shortTime(task.dueAt)}${suffix}</b></span>`);
             const opt = REMIND_OPTIONS.find(o => o.value !== '' && Number(o.value) === task.remindBefore);
             if (opt && !task.completed) meta.push(`<span title="截止提醒">⏰ ${opt.label}</span>`);
         }
+        if (task.plannedAt) when.push(`<span class="w plan"><i>计划</i><b>${shortTime(task.plannedAt)}</b></span>`);
     }
     if (task.completed && task.completedAt) {
         meta.push(`<span>完成于 ${new Date(task.completedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>`);
@@ -37,6 +38,7 @@ export function createTaskElement(task) {
         </label>
         <div class="task-body task-text-container" title="双击编辑">
             <p class="task-text">${escapeHtml(task.text)}</p>
+            ${when.length ? `<div class="when">${when.join('')}</div>` : ''}
             ${meta.length ? `<div class="meta">${meta.join('')}</div>` : ''}
         </div>
         <button class="delete-btn" title="删除">${DEL_SVG}</button>`;

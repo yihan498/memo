@@ -5,10 +5,10 @@ import { Header } from './components/Header.js';
 import { TaskList } from './components/TaskList.js';
 import { TaskInput } from './components/TaskInput.js';
 import { TodoForm } from './components/TodoForm.js';
-import { sortTodos, quadrantOf, QUADRANTS, dueReminders, shortTime } from './services/todoSort.js';
+import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, shortTime } from './services/todoSort.js';
 
 // 需要持久化的状态字段 → electron-store 的 key
-const PERSIST_KEYS = ['tasks', 'view', 'lastResetDate', 'dailyHistory', 'checkTime', 'lastNotifiedDate'];
+const PERSIST_KEYS = ['tasks', 'view', 'lastResetDate', 'dailyHistory', 'checkTime', 'lastNotifiedDate', 'todoSort'];
 
 const store = {
     get: (k, d) => window.electronAPI.getStoreValue(k, d),
@@ -23,6 +23,7 @@ class TodoWidgetApp {
             lastResetDate: null,
             dailyHistory: {},
             checkTime: '21:30',     // 晚间检查时间
+            todoSort: 'time',       // 待办排序：'time' 按时间 | 'priority' 按重要程度
             lastNotifiedDate: null
         };
         this.currentTheme = 'dark';
@@ -64,6 +65,11 @@ class TodoWidgetApp {
 
         this.setupTabs();
         this.setupDailyBar();
+        document.querySelectorAll('.seg-btn').forEach(btn => btn.addEventListener('click', () => {
+            this.state.todoSort = btn.dataset.sort;
+            store.set('todoSort', this.state.todoSort);
+            this.updateUI();
+        }));
         this.setupKeyboardShortcuts();
 
         this.tick();
@@ -89,7 +95,7 @@ class TodoWidgetApp {
         // 零碎待办的截止提醒
         const due = dueReminders(this.state.tasks, now.getTime());
         if (due.length) {
-            due.forEach(t => window.electronAPI.notify(`待办提醒：${t.text}`, `截止 ${shortTime(t.dueAt)}`));
+            due.forEach(t => window.electronAPI.notify(`提醒：${t.text}`, `截止 ${shortTime(t.dueAt)}`));
             const ids = new Set(due.map(t => t.id));
             this.state.tasks = this.state.tasks.map(t =>
                 ids.has(t.id) ? { ...t, remindedFor: t.dueAt + '|' + t.remindBefore } : t);
@@ -100,7 +106,7 @@ class TodoWidgetApp {
         if (pending) {
             const names = pending.map(t => t.text).join('、');
             window.electronAPI.notify(
-                `今日常规还有 ${pending.length} 项未完成`,
+                `今天还有 ${pending.length} 项常规没做`,
                 names
             );
             this.state.lastNotifiedDate = dateKey(now);
@@ -231,10 +237,15 @@ class TodoWidgetApp {
         let groupOf = null;
         if (view === 'todo') {
             const now = Date.now();
-            visible = sortTodos(visible, now);
-            groupOf = t => t.completed
+            if (this.state.todoSort === 'time') {
+                visible = sortTodosByTime(visible, now);
+                groupOf = t => dayGroup(t, now);
+            } else {
+                visible = sortTodos(visible, now);
+                groupOf = t => t.completed
                 ? { key: 'qdone', label: '已完成' }
                 : { key: 'q' + quadrantOf(t, now), label: QUADRANTS[quadrantOf(t, now)].label };
+            }
         }
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -250,6 +261,8 @@ class TodoWidgetApp {
         this.taskInput.setView(view);
 
         this.renderDailyBar(view === 'daily');
+        document.getElementById('todoBar').classList.toggle('hidden', view !== 'todo');
+        document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === this.state.todoSort));
         this.taskList.render(visible, groupOf);
         this.taskList.updateEmptyState(visible.length);
         this.taskInput.updateStats(visible, view);
