@@ -1,0 +1,67 @@
+{
+  "view": "daily",
+  "lastResetDate": "__TODAY__",
+  "tasks": [
+    {
+      "id": "d1",
+      "type": "daily",
+      "text": "写产品文档",
+      "area": "产品",
+      "targetMin": 60,
+      "countdown": true,
+      "sessions": [],
+      "runningSince": "__AGO_1500__",
+      "completed": false,
+      "createdAt": "__AGO_90000__",
+      "completedAt": null
+    },
+    {
+      "id": "d2",
+      "type": "daily",
+      "text": "刷短视频（限时）",
+      "area": "休息",
+      "targetMin": 1,
+      "countdown": true,
+      "sessions": [],
+      "runningSince": "__AGO_50__",
+      "completed": false,
+      "createdAt": "__AGO_90000__",
+      "completedAt": null
+    },
+    {
+      "id": "d3",
+      "type": "daily",
+      "text": "背单词",
+      "area": "学习",
+      "targetMin": 30,
+      "sessions": [],
+      "runningSince": "__AGO_600__",
+      "completed": false,
+      "createdAt": "__AGO_90000__",
+      "completedAt": null
+    },
+    {
+      "id": "d4",
+      "type": "daily",
+      "text": "晨跑",
+      "area": "健康",
+      "completed": true,
+      "createdAt": "__AGO_90000__",
+      "completedAt": "__AGO_3600__"
+    },
+    {
+      "id": "d5",
+      "type": "daily",
+      "text": "喝水",
+      "completed": false,
+      "createdAt": "__AGO_90000__",
+      "completedAt": null
+    }
+  ],
+  "windowBounds": {
+    "width": 320,
+    "height": 560,
+    "x": 700,
+    "y": 60
+  }
+}

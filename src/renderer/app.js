@@ -65,6 +65,8 @@ class TodoWidgetApp {
             onEditStart: (id) => this.handleEditStart(id),
             onEditSave: (id, text, min, area, countdown) => this.handleEditSave(id, text, min, area, countdown),
             onEditCancel: () => this.updateUI(),
+            onAreaAdd: (area, text, min, countdown) => this.handleAddTask(text, min, area, countdown),
+            onAreaQuick: (area, text) => { const p = parseTodo(text); this.todoForm.open(null, p.area ? p : { ...p, area, hits: [`分区 ${area}`, ...p.hits] }); },
             onRerender: () => this.updateUI()
         });
 
@@ -345,7 +347,7 @@ class TodoWidgetApp {
             document.getElementById('areaList').innerHTML = areaHtml;
             this.lastAreaHtml = areaHtml;
         }
-        this.taskList.render(groupByArea(visible), groupOf, { late: pastCheckTime(this.state) });
+        this.taskList.render(groupByArea(visible), groupOf, { late: pastCheckTime(this.state), view });
         this.taskList.updateEmptyState(visible.length);
         this.taskInput.updateStats(visible, view);
     }

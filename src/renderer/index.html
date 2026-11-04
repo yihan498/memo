@@ -179,6 +179,11 @@
         .area-name { font-weight: 700; color: var(--fg); letter-spacing: .3px; }
         .area-name::before { content: ""; display: inline-block; width: 3px; height: 10px; border-radius: 2px; background: var(--accent); margin-right: 6px; vertical-align: -1px; }
         .area-count { color: var(--muted); }
+        .area-right { display: flex; align-items: center; gap: 6px; }
+        .area-add { width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center; font-size: 14px; line-height: 1; color: var(--muted); }
+        .area-add:hover { color: var(--accent); background: var(--accent-soft); }
+        .area-add-row { display: flex; align-items: center; gap: 8px; padding: 4px 10px 8px; }
+        .area-add-row .edit-input::placeholder { color: var(--muted); font-size: 11px; }
         .area-box .group-label { padding-top: 6px; }
         .area-box.done { border-style: dashed; }
         .area-box.done .area-name { color: var(--muted); }
@@ -191,7 +196,7 @@
         .clock.over { color: var(--ok); }
         .clock.over.running { color: var(--bad); }
         .input-row input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; padding: 7px 0; }
-        .input-row input::placeholder { color: var(--muted); }
+        .input-row input::placeholder { color: var(--muted); font-size: 11px; }
         .add-btn { flex-shrink: 0; width: 26px; height: 26px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 17px; line-height: 1; }
         .parsed { margin: -4px 0 12px; padding: 6px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-size: 11px; line-height: 1.5; }
         .add-todo-btn { width: 100%; padding: 8px; border-radius: 8px; background: var(--accent); color: var(--on-accent); font-weight: 600; }

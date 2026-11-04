@@ -9,6 +9,7 @@ export class TaskList {
         this.selectedId = null;
         this.confirmId = null;   // 正在等待二次确认删除的任务
         this.confirmTimer = null;
+        this.addingArea = null;  // 正在哪个分区框里直接添加（框内输入行）
         this.container.addEventListener('click', (e) => this.handleEvent(e));
         this.container.addEventListener('dblclick', (e) => this.handleEvent(e));
     }
@@ -16,9 +17,12 @@ export class TaskList {
     /**
      * @param sections [{ area, tasks }]：有 area 的画成一个框，area 为 null 的直接平铺
      * @param groupOf 可选：task => { key, label }，相邻 key 变化时插入分组标题（每个框内重新计）
-     * @param ctx 传给每个任务项的上下文（如 late）
+     * @param ctx 传给每个任务项的上下文（如 late）；ctx.view 决定框内添加行的样式（daily / todo）
      */
     render(sections, groupOf = null, ctx = {}) {
+        this.view = ctx.view || 'daily';
+        if (this.addingArea && !sections.some(s => s.area === this.addingArea)) this.addingArea = null;
+        let addRowBox = null;
         this.ids = sections.flatMap(s => s.tasks.map(t => t.id));
         if (this.selectedId && !this.ids.includes(this.selectedId)) this.selectedId = null;
         this.container.innerHTML = '';
@@ -29,8 +33,10 @@ export class TaskList {
                 const box = document.createElement('section');
                 box.className = 'area-box' + (done ? ' done' : '');
                 const left = tasks.filter(t => !t.completed).length;
-                box.innerHTML = `<div class="area-head"><span class="area-name"></span><span class="area-count">${left ? `剩 ${left}` : '全部完成'}</span></div>`;
+                box.dataset.area = area;
+                box.innerHTML = `<div class="area-head"><span class="area-name"></span><span class="area-right"><span class="area-count">${left ? `剩 ${left}` : '全部完成'}</span><button type="button" class="area-add" title="直接在这个分区里添加">+</button></span></div>`;
                 box.querySelector('.area-name').textContent = area;
+                if (area === this.addingArea) addRowBox = box;
                 frag.appendChild(box);
                 parent = box;
             }
@@ -53,6 +59,53 @@ export class TaskList {
             });
         });
         this.container.appendChild(frag);
+        if (addRowBox) this.mountAddRow(addRowBox, this.addingArea);
+    }
+
+    // --- 分区框内直接添加：点框头的 + → 框里出现输入行，回车即加到这个分区 ---
+
+    toggleAddRow(area) {
+        this.addingArea = this.addingArea === area ? null : area;
+        this.callbacks.onRerender();
+    }
+
+    mountAddRow(box, area) {
+        const row = document.createElement('div');
+        row.className = 'area-add-row';
+        row.innerHTML = this.view === 'daily'
+            ? `<input type="text" class="edit-input aa-text">
+               <button type="button" class="cd-toggle" title="倒计时：时间用完自动停止并提醒（不选 = 正计时，达标提醒）">倒</button>
+               <input type="number" class="edit-input edit-min aa-min" min="1" max="1440" placeholder="分钟" title="想计时就填目标分钟数，留空 = 普通勾选">`
+            : `<input type="text" class="edit-input aa-text" title="回车后自动识别时间 / 优先级 / 提醒，打开表单核对后再保存">`;
+        const text = row.querySelector('.aa-text');
+        text.placeholder = this.view === 'daily' ? '添加到这里，回车' : '一句话添加到这里，回车';
+        const min = row.querySelector('.aa-min');
+        const cd = row.querySelector('.cd-toggle');
+        if (cd) {
+            cd.addEventListener('mousedown', (e) => e.preventDefault());
+            cd.addEventListener('click', () => cd.classList.toggle('on'));
+        }
+        const close = () => { if (this.addingArea === area) { this.addingArea = null; this.callbacks.onRerender(); } };
+        row.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+            if (e.key === 'Escape') { close(); return; }
+            if (e.key !== 'Enter' || e.isComposing) return;
+            e.preventDefault();
+            const v = text.value.trim();
+            if (this.view === 'daily') {
+                if (!v) { close(); return; }
+                // 加完行保持打开，方便连续添加；render 会重建并重新聚焦
+                this.callbacks.onAreaAdd(area, v, min.value ? Number(min.value) : null, cd.classList.contains('on'));
+            } else {
+                this.addingArea = null;
+                this.callbacks.onAreaQuick(area, v);
+            }
+        });
+        row.addEventListener('focusout', (e) => {
+            if (!row.contains(e.relatedTarget) && !text.value.trim()) setTimeout(close, 0);
+        });
+        box.querySelector('.area-head').after(row);
+        text.focus();
     }
 
     updateEmptyState(count) {
@@ -88,6 +141,8 @@ export class TaskList {
 
     handleEvent(e) {
         const target = e.target;
+        const addBtn = e.type === 'click' && target.closest('.area-add');
+        if (addBtn) { this.toggleAddRow(addBtn.closest('.area-box').dataset.area); return; }
         const taskEl = target.closest('[data-task-id]');
         if (!taskEl) return;
         const id = taskEl.getAttribute('data-task-id');
