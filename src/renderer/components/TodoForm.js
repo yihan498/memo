@@ -1,5 +1,6 @@
 // 零碎待办的新建 / 编辑表单
 import { REMIND_OPTIONS, weekday } from '../services/todoSort.js';
+import { normArea } from '../services/areas.js';
 export class TodoForm {
     constructor({ onSave }) {
         this.onSave = onSave;
@@ -11,6 +12,7 @@ export class TodoForm {
         this.fImportant = document.getElementById('fImportant');
         this.fUrgent = document.getElementById('fUrgent');
         this.fRemind = document.getElementById('fRemind');
+        this.fArea = document.getElementById('fArea');
         this.fRemind.innerHTML = REMIND_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
         // 填了截止时间但还没选提醒 → 默认提前 1 小时
         this.fDue.addEventListener('change', () => {
@@ -39,6 +41,7 @@ export class TodoForm {
         this.editingId = task ? task.id : null;
         this.title.textContent = task ? '编辑待办' : '新建待办';
         this.fText.value = task ? task.text : '';
+        this.fArea.value = (task && task.area) || '';
         this.fPlanned.value = (task && task.plannedAt) || '';
         this.fDue.value = (task && task.dueAt) || '';
         const rb = task && task.remindBefore !== undefined && task.remindBefore !== null ? String(task.remindBefore) : '';
@@ -70,6 +73,7 @@ export class TodoForm {
         }
         this.onSave(this.editingId, {
             text,
+            area: normArea(this.fArea.value),
             plannedAt: this.fPlanned.value || null,
             dueAt: this.fDue.value || null,
             remindBefore: this.fDue.value && this.fRemind.value !== '' ? Number(this.fRemind.value) : null,

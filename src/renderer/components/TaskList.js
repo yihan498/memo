@@ -14,31 +14,43 @@ export class TaskList {
     }
 
     /**
-     * @param tasks 已排好序的任务
-     * @param groupOf 可选：task => { key, label }，相邻 key 变化时插入分组标题
+     * @param sections [{ area, tasks }]：有 area 的画成一个框，area 为 null 的直接平铺
+     * @param groupOf 可选：task => { key, label }，相邻 key 变化时插入分组标题（每个框内重新计）
      * @param ctx 传给每个任务项的上下文（如 late）
      */
-    render(tasks, groupOf = null, ctx = {}) {
-        this.ids = tasks.map(t => t.id);
+    render(sections, groupOf = null, ctx = {}) {
+        this.ids = sections.flatMap(s => s.tasks.map(t => t.id));
         if (this.selectedId && !this.ids.includes(this.selectedId)) this.selectedId = null;
         this.container.innerHTML = '';
         const frag = document.createDocumentFragment();
-        let lastKey = null;
-        tasks.forEach(task => {
-            if (groupOf) {
-                const g = groupOf(task);
-                if (g.key !== lastKey) {
-                    const h = document.createElement('div');
-                    h.className = `group-label ${g.key}`;
-                    h.textContent = g.label;
-                    frag.appendChild(h);
-                    lastKey = g.key;
-                }
+        sections.forEach(({ area, tasks }) => {
+            let parent = frag;
+            if (area) {
+                const box = document.createElement('section');
+                box.className = 'area-box';
+                const left = tasks.filter(t => !t.completed).length;
+                box.innerHTML = `<div class="area-head"><span class="area-name"></span><span class="area-count">${left ? `剩 ${left}` : '全部完成'}</span></div>`;
+                box.querySelector('.area-name').textContent = area;
+                frag.appendChild(box);
+                parent = box;
             }
-            const el = createTaskElement(task, ctx);
-            if (task.id === this.selectedId) el.classList.add('selected');
-            if (task.id === this.confirmId) this.markConfirm(el);
-            frag.appendChild(el);
+            let lastKey = null;
+            tasks.forEach(task => {
+                if (groupOf) {
+                    const g = groupOf(task);
+                    if (g.key !== lastKey) {
+                        const h = document.createElement('div');
+                        h.className = `group-label ${g.key}`;
+                        h.textContent = g.label;
+                        parent.appendChild(h);
+                        lastKey = g.key;
+                    }
+                }
+                const el = createTaskElement(task, ctx);
+                if (task.id === this.selectedId) el.classList.add('selected');
+                if (task.id === this.confirmId) this.markConfirm(el);
+                parent.appendChild(el);
+            });
         });
         this.container.appendChild(frag);
     }
@@ -117,24 +129,26 @@ export class TaskList {
         this.select(this.ids[next]);
     }
 
-    // 每日常规的行内编辑：名称 + 计时目标（分钟，可空）
-    enableEditing(taskId, currentText, targetMin) {
+    // 每日常规的行内编辑：名称 + 分区（可空）+ 计时目标（分钟，可空）
+    enableEditing(taskId, currentText, targetMin, area) {
         const el = this.container.querySelector(`[data-task-id="${taskId}"] .task-text-container`);
         if (!el) return;
         el.innerHTML = `
             <div class="edit-row">
                 <input type="text" class="edit-input" value="">
+                <input type="text" class="edit-input edit-area" list="areaList" placeholder="分区" title="分区（如 产品），留空 = 不分区">
                 <input type="number" class="edit-input edit-min" min="1" max="1440" placeholder="分钟" title="计时目标（分钟），留空 = 不计时">
             </div>`;
-        const [input, minInput] = el.querySelectorAll('input');
+        const [input, areaInput, minInput] = el.querySelectorAll('input');
         input.value = currentText;
+        areaInput.value = area || '';
         minInput.value = targetMin || '';
         input.focus();
         input.select();
         let done = false;
         const save = () => {
             if (done) return; done = true;
-            this.callbacks.onEditSave(taskId, input.value, minInput.value);
+            this.callbacks.onEditSave(taskId, input.value, minInput.value, areaInput.value);
         };
         el.addEventListener('focusout', (e) => { if (!el.contains(e.relatedTarget)) save(); });
         el.addEventListener('keydown', (e) => {

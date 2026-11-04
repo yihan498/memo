@@ -4,6 +4,7 @@ export class TaskInput {
         this.callbacks = callbacks;
         this.taskInput = document.getElementById('taskInput');
         this.targetInput = document.getElementById('targetInput');
+        this.areaInput = document.getElementById('areaInput');
         this.inputRow = document.getElementById('dailyInputRow');
         this.openFormBtn = document.getElementById('openFormBtn');
         this.countEl = document.getElementById('taskCount');
@@ -15,12 +16,13 @@ export class TaskInput {
             const text = this.taskInput.value.trim();
             if (!text) return;
             const min = parseInt(this.targetInput.value, 10);
-            this.callbacks.onAddTask(text, min > 0 ? min : null);
+            // 分区保留不清空：连续往同一个分区里加更顺手
+            this.callbacks.onAddTask(text, min > 0 ? min : null, this.areaInput.value);
             this.taskInput.value = '';
             this.targetInput.value = '';
             this.taskInput.focus();
         };
-        [this.taskInput, this.targetInput].forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); }));
+        [this.taskInput, this.areaInput, this.targetInput].forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); }));
         document.getElementById('addBtn').addEventListener('click', submit);
         this.openFormBtn.addEventListener('click', () => this.callbacks.onOpenForm());
         this.clearBtn.addEventListener('click', () => this.requestClear());

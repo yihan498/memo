@@ -8,6 +8,7 @@ import { TodoForm } from './components/TodoForm.js';
 import { Records } from './components/Records.js';
 import { timerHtml } from './components/TaskItem.js';
 import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, shortTime } from './services/todoSort.js';
+import { normArea, listAreas, groupByArea } from './services/areas.js';
 
 // 需要持久化的状态字段 → electron-store 的 key
 const PERSIST_KEYS = ['tasks', 'view', 'lastResetDate', 'dailyHistory', 'checkTime', 'lastNotifiedDate', 'todoSort', 'todoLog'];
@@ -61,13 +62,13 @@ class TodoWidgetApp {
             onDelete: (id) => this.handleDeleteTask(id),
             onTimer: (id) => this.handleTimer(id),
             onEditStart: (id) => this.handleEditStart(id),
-            onEditSave: (id, text, min) => this.handleEditSave(id, text, min),
+            onEditSave: (id, text, min, area) => this.handleEditSave(id, text, min, area),
             onEditCancel: () => this.updateUI(),
             onRerender: () => this.updateUI()
         });
 
         this.taskInput = new TaskInput({
-            onAddTask: (text, min) => this.handleAddTask(text, min),
+            onAddTask: (text, min, area) => this.handleAddTask(text, min, area),
             onOpenForm: () => this.todoForm.open(),
             onClearCompleted: () => this.handleClearCompleted()
         });
@@ -180,10 +181,12 @@ class TodoWidgetApp {
         return { id: t.id, text: t.text, completedAt: t.completedAt, dueAt: t.dueAt || null };
     }
 
-    handleAddTask(text, targetMin = null) {
+    handleAddTask(text, targetMin = null, area = null) {
         try {
             this.state = createTask(this.state, text, this.state.view);
-            if (targetMin) this.state = updateTask(this.state, this.state.tasks[0].id, { targetMin, sessions: [], runningSince: null });
+            const id = this.state.tasks[0].id;
+            if (targetMin) this.state = updateTask(this.state, id, { targetMin, sessions: [], runningSince: null });
+            if (normArea(area)) this.state = updateTask(this.state, id, { area: normArea(area) });
             this.persist();
             this.updateUI();
             setTimeout(() => {
@@ -238,7 +241,7 @@ class TodoWidgetApp {
         const task = this.state.tasks.find(t => t.id === id);
         if (!task) return;
         if (task.type === 'todo') this.todoForm.open(task);
-        else this.taskList.enableEditing(id, task.text, task.targetMin);
+        else this.taskList.enableEditing(id, task.text, task.targetMin, task.area);
     }
 
     handleSaveTodo(id, attrs) {
@@ -252,11 +255,11 @@ class TodoWidgetApp {
         this.updateUI();
     }
 
-    handleEditSave(id, newText, minRaw) {
+    handleEditSave(id, newText, minRaw, area) {
         if (newText.trim() !== '') {
             const min = parseInt(minRaw, 10);
             const task = this.state.tasks.find(t => t.id === id);
-            const attrs = { text: newText, targetMin: min > 0 ? min : null };
+            const attrs = { text: newText, targetMin: min > 0 ? min : null, area: normArea(area) };
             if (!attrs.targetMin && task && task.runningSince) this.state = stopTimer(this.state, id);
             this.state = updateTask(this.state, id, attrs);
             this.persist();
@@ -330,7 +333,15 @@ class TodoWidgetApp {
         document.getElementById('emptySub').textContent =
             view === 'daily' ? '在下方输入，想计时就在右边填分钟数' : '点下方「+ 添加待办」或按 Ctrl+N';
         document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === this.state.todoSort));
-        this.taskList.render(visible, groupOf, { late: pastCheckTime(this.state) });
+        // 分区候选：两个页面共用已有的分区名
+        // 只在变化时重建，避免每 30 秒 tick 打断正在展开的下拉
+        const areaHtml = listAreas(this.state.tasks)
+            .map(a => `<option value="${a.replace(/[&"<>]/g, c => `&#${c.charCodeAt(0)};`)}"></option>`).join('');
+        if (areaHtml !== this.lastAreaHtml) {
+            document.getElementById('areaList').innerHTML = areaHtml;
+            this.lastAreaHtml = areaHtml;
+        }
+        this.taskList.render(groupByArea(visible), groupOf, { late: pastCheckTime(this.state) });
         this.taskList.updateEmptyState(visible.length);
         this.taskInput.updateStats(visible, view);
     }
