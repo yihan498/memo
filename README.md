@@ -50,3 +50,4 @@ npm run build:win  :: 打包安装程序到 dist/
 - `src/renderer/components/TodoForm.js` — 待办表单
 - 样式全部在 `index.html` 的 `<style>`，颜色只用 `:root` 变量（已去掉 Tailwind）
 - 调试：设置环境变量 `TODO_DATA_DIR` 指向独立目录（如项目下 `.testdata/`，已 gitignore），不污染真实数据；此时窗口显示不抢焦点。再设 `TODO_DEBUG_EVAL` 指向一个 js 文件，页面加载 1.5 秒后在渲染进程执行它（模拟输入 / 点击）
+- 界面截图测试已封装成项目 skill：`.claude/skills/ui-check/`（一条命令完成：隔离数据 → 启动 → 模拟输入 → 定时截图 → 只关测试实例）。改完界面就跑一次，用法见其中的 SKILL.md

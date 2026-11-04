@@ -1,0 +1,13 @@
+{
+  "view": "todo",
+  "lastResetDate": "__TODAY__",
+  "tasks": [
+    { "id": "t1", "type": "todo", "text": "交周报", "area": "产品", "dueAt": "__LOCAL_+120__", "remindBefore": 60,
+      "important": true, "urgent": true, "completed": false, "createdAt": "__AGO_7200__", "completedAt": null },
+    { "id": "t2", "type": "todo", "text": "整理用户反馈", "area": "产品", "plannedAt": "__LOCAL_+1440__",
+      "completed": false, "createdAt": "__AGO_7200__", "completedAt": null },
+    { "id": "t3", "type": "todo", "text": "还图书馆的书", "area": "学校", "dueAt": "__LOCAL_-30__",
+      "completed": true, "createdAt": "__AGO_7200__", "completedAt": "__AGO_600__" },
+    { "id": "t4", "type": "todo", "text": "买洗衣液", "completed": false, "createdAt": "__AGO_7200__", "completedAt": null }
+  ]
+}
