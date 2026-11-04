@@ -20,15 +20,25 @@ export function fmtClock(msv) {
 /** 计时型常规的进度块（每秒刷新时也只重画这一块） */
 export function timerHtml(task, now = Date.now()) {
     const el = elapsedMs(task, now);
-    const pct = Math.min(100, (el / (task.targetMin * 60000)) * 100);
+    const total = task.targetMin * 60000;
     const sess = (task.sessions || []).map(x => `${hm(x.start)}–${hm(x.end)}`);
     if (task.runningSince) sess.push(`${hm(task.runningSince)}–…`);
+    const run = task.runningSince ? 'running' : '';
+    let line, pct;
+    if (task.countdown) {
+        // 倒计时：显示剩余，进度条随时间缩短；用完后显示超出多少
+        const left = total - el;
+        pct = Math.max(0, Math.min(100, (left / total) * 100));
+        line = left > 0
+            ? `<b class="clock ${run}">${fmtClock(left)}</b><span class="target">剩余 · 共 ${task.targetMin} 分</span>`
+            : `<b class="clock over ${run}">时间到${left < -1000 ? ` +${fmtClock(-left)}` : ''}</b><span class="target">共 ${task.targetMin} 分</span>`;
+    } else {
+        pct = Math.min(100, (el / total) * 100);
+        line = `<b class="clock ${run}">${fmtClock(el)}</b><span class="target">/ ${task.targetMin} 分</span>`;
+    }
     return `
-        <div class="timer-line">
-            <b class="clock ${task.runningSince ? 'running' : ''}">${fmtClock(el)}</b>
-            <span class="target">/ ${task.targetMin} 分</span>
-        </div>
-        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="timer-line">${line}</div>
+        <div class="bar ${task.countdown ? 'cd' : ''}"><i style="width:${pct}%"></i></div>
         ${sess.length ? `<div class="sessions">${sess.join('　')}</div>` : ''}`;
 }
 

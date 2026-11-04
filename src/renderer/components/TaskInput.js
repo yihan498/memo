@@ -5,6 +5,8 @@ export class TaskInput {
         this.taskInput = document.getElementById('taskInput');
         this.targetInput = document.getElementById('targetInput');
         this.areaInput = document.getElementById('areaInput');
+        this.cdToggle = document.getElementById('cdToggle');
+        this.cdToggle.addEventListener('click', () => this.cdToggle.classList.toggle('on'));
         this.inputRow = document.getElementById('dailyInputRow');
         this.openFormBtn = document.getElementById('openFormBtn');
         this.countEl = document.getElementById('taskCount');
@@ -17,7 +19,8 @@ export class TaskInput {
             if (!text) return;
             const min = parseInt(this.targetInput.value, 10);
             // 分区保留不清空：连续往同一个分区里加更顺手
-            this.callbacks.onAddTask(text, min > 0 ? min : null, this.areaInput.value);
+            this.callbacks.onAddTask(text, min > 0 ? min : null, this.areaInput.value, this.cdToggle.classList.contains('on'));
+            this.cdToggle.classList.remove('on');
             this.taskInput.value = '';
             this.targetInput.value = '';
             this.taskInput.focus();

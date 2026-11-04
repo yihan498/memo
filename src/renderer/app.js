@@ -62,13 +62,13 @@ class TodoWidgetApp {
             onDelete: (id) => this.handleDeleteTask(id),
             onTimer: (id) => this.handleTimer(id),
             onEditStart: (id) => this.handleEditStart(id),
-            onEditSave: (id, text, min, area) => this.handleEditSave(id, text, min, area),
+            onEditSave: (id, text, min, area, countdown) => this.handleEditSave(id, text, min, area, countdown),
             onEditCancel: () => this.updateUI(),
             onRerender: () => this.updateUI()
         });
 
         this.taskInput = new TaskInput({
-            onAddTask: (text, min, area) => this.handleAddTask(text, min, area),
+            onAddTask: (text, min, area, countdown) => this.handleAddTask(text, min, area, countdown),
             onOpenForm: () => this.todoForm.open(),
             onClearCompleted: () => this.handleClearCompleted()
         });
@@ -132,7 +132,9 @@ class TodoWidgetApp {
         const { state, reached } = applyTimers(this.state);
         if (reached.length) {
             this.state = state;
-            reached.forEach(t => window.electronAPI.notify(`「${t.text}」已达标`, `今天已计时 ${t.targetMin} 分钟，可以停下了`));
+            reached.forEach(t => t.countdown
+                ? window.electronAPI.notify(`⏰「${t.text}」时间到`, `今天的 ${t.targetMin} 分钟已用完，计时已自动停止`)
+                : window.electronAPI.notify(`「${t.text}」已达标`, `今天已计时 ${t.targetMin} 分钟，可以停下了`));
             this.persist();
             if (!document.querySelector('.edit-input')) this.updateUI();
             return;
@@ -181,11 +183,11 @@ class TodoWidgetApp {
         return { id: t.id, text: t.text, completedAt: t.completedAt, dueAt: t.dueAt || null };
     }
 
-    handleAddTask(text, targetMin = null, area = null) {
+    handleAddTask(text, targetMin = null, area = null, countdown = false) {
         try {
             this.state = createTask(this.state, text, this.state.view);
             const id = this.state.tasks[0].id;
-            if (targetMin) this.state = updateTask(this.state, id, { targetMin, sessions: [], runningSince: null });
+            if (targetMin) this.state = updateTask(this.state, id, { targetMin, countdown: !!countdown, sessions: [], runningSince: null });
             if (normArea(area)) this.state = updateTask(this.state, id, { area: normArea(area) });
             this.persist();
             this.updateUI();
@@ -241,7 +243,7 @@ class TodoWidgetApp {
         const task = this.state.tasks.find(t => t.id === id);
         if (!task) return;
         if (task.type === 'todo') this.todoForm.open(task);
-        else this.taskList.enableEditing(id, task.text, task.targetMin, task.area);
+        else this.taskList.enableEditing(id, task.text, task.targetMin, task.area, task.countdown);
     }
 
     handleSaveTodo(id, attrs) {
@@ -255,11 +257,11 @@ class TodoWidgetApp {
         this.updateUI();
     }
 
-    handleEditSave(id, newText, minRaw, area) {
+    handleEditSave(id, newText, minRaw, area, countdown = false) {
         if (newText.trim() !== '') {
             const min = parseInt(minRaw, 10);
             const task = this.state.tasks.find(t => t.id === id);
-            const attrs = { text: newText, targetMin: min > 0 ? min : null, area: normArea(area) };
+            const attrs = { text: newText, targetMin: min > 0 ? min : null, area: normArea(area), countdown: !!countdown };
             if (!attrs.targetMin && task && task.runningSince) this.state = stopTimer(this.state, id);
             this.state = updateTask(this.state, id, attrs);
             this.persist();

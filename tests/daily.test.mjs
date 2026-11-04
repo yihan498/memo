@@ -54,6 +54,25 @@ assert.equal(it.minutes, 25 + 9 * 60); // 15:00 → 24:00
 assert.equal(it.sessions.length, 3);
 assert.deepEqual(c.tasks.map(x => [x.completed, x.sessions.length, x.runningSince, x.autoDone]), [[false,0,null,false],[false,0,null,false]]);
 
+// --- 倒计时：到点自动停表，结束时间 = 恰好用完的那一刻 ---
+let cd = { tasks: [t('刷题', 'daily', false, { targetMin: 60, countdown: true, sessions: [], runningSince: null })] };
+cd = m.startTimer(cd, '刷题', new Date(2026,10,4,9,0));
+cd = m.stopTimer(cd, '刷题', new Date(2026,10,4,9,40));
+cd = m.startTimer(cd, '刷题', new Date(2026,10,4,10,0));
+assert.equal(m.remainingMs(cd.tasks[0], new Date(2026,10,4,10,5).getTime()), 15 * 60000);
+assert.equal(m.applyTimers(cd, new Date(2026,10,4,10,19).getTime()).reached.length, 0);
+res = m.applyTimers(cd, new Date(2026,10,4,10,30).getTime()); // 电脑睡了 10 分钟才醒
+assert.equal(res.reached.length, 1);
+const ct = res.state.tasks[0];
+assert.equal(ct.runningSince, null);
+assert.equal(ct.completed, true);
+assert.equal(m.elapsedMs(ct), 60 * 60000);           // 不多记
+assert.equal(new Date(ct.sessions[1].end).getHours() * 60 + new Date(ct.sessions[1].end).getMinutes(), 10 * 60 + 20);
+// 正计时型达标后不停表
+let up = { tasks: [t('阅读', 'daily', false, { targetMin: 10, sessions: [], runningSince: null })] };
+up = m.startTimer(up, '阅读', new Date(2026,10,4,9,0));
+assert.notEqual(m.applyTimers(up, new Date(2026,10,4,9,15).getTime()).state.tasks[0].runningSince, null);
+
 // --- 记录统计 ---
 const st = {
     dailyHistory: {

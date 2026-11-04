@@ -55,13 +55,24 @@ export function stopTimer(state, id, now = new Date()) {
     return { ...state, tasks: state.tasks.map(t => (t.id === id ? closeSession(t, iso) : t)) };
 }
 
-/** 计时达标的自动勾选；返回 { state, reached: [刚达标的任务] } */
+/** 剩余毫秒（倒计时显示用）；超时为负数 */
+export function remainingMs(task, now = Date.now()) {
+    return task.targetMin * 60000 - elapsedMs(task, now);
+}
+
+/**
+ * 计时达标的自动勾选；返回 { state, reached: [刚达标的任务] }
+ * 倒计时型（countdown）到点还会自动停表，结束时间按「恰好用完」那一刻算（睡眠 / 卡顿也不多记）
+ */
 export function applyTimers(state, now = Date.now()) {
     const reached = [];
     const tasks = state.tasks.map(t => {
         if (t.type !== 'daily' || !t.targetMin || t.completed || t.autoDone) return t;
-        if (elapsedMs(t, now) < t.targetMin * 60000) return t;
-        const done = { ...t, completed: true, completedAt: new Date(now).toISOString(), autoDone: true };
+        const over = elapsedMs(t, now) - t.targetMin * 60000;
+        if (over < 0) return t;
+        const hitAt = now - over;
+        const base = t.countdown && t.runningSince ? closeSession(t, new Date(hitAt).toISOString()) : t;
+        const done = { ...base, completed: true, completedAt: new Date(hitAt).toISOString(), autoDone: true };
         reached.push(done);
         return done;
     });

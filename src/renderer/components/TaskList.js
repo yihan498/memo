@@ -23,11 +23,11 @@ export class TaskList {
         if (this.selectedId && !this.ids.includes(this.selectedId)) this.selectedId = null;
         this.container.innerHTML = '';
         const frag = document.createDocumentFragment();
-        sections.forEach(({ area, tasks }) => {
+        sections.forEach(({ area, tasks, done }) => {
             let parent = frag;
             if (area) {
                 const box = document.createElement('section');
-                box.className = 'area-box';
+                box.className = 'area-box' + (done ? ' done' : '');
                 const left = tasks.filter(t => !t.completed).length;
                 box.innerHTML = `<div class="area-head"><span class="area-name"></span><span class="area-count">${left ? `剩 ${left}` : '全部完成'}</span></div>`;
                 box.querySelector('.area-name').textContent = area;
@@ -130,16 +130,20 @@ export class TaskList {
     }
 
     // 每日常规的行内编辑：名称 + 分区（可空）+ 计时目标（分钟，可空）
-    enableEditing(taskId, currentText, targetMin, area) {
+    enableEditing(taskId, currentText, targetMin, area, countdown) {
         const el = this.container.querySelector(`[data-task-id="${taskId}"] .task-text-container`);
         if (!el) return;
         el.innerHTML = `
             <div class="edit-row">
                 <input type="text" class="edit-input" value="">
                 <input type="text" class="edit-input edit-area" list="areaList" placeholder="分区" title="分区（如 产品），留空 = 不分区">
+                <button type="button" class="cd-toggle ${countdown ? 'on' : ''}" title="倒计时：时间用完自动停止并提醒（不选 = 正计时，达标提醒）">倒</button>
                 <input type="number" class="edit-input edit-min" min="1" max="1440" placeholder="分钟" title="计时目标（分钟），留空 = 不计时">
             </div>`;
         const [input, areaInput, minInput] = el.querySelectorAll('input');
+        const cdBtn = el.querySelector('.cd-toggle');
+        cdBtn.addEventListener('mousedown', (e) => e.preventDefault()); // 点它不让输入框失焦（否则会提前保存）
+        cdBtn.addEventListener('click', () => cdBtn.classList.toggle('on'));
         input.value = currentText;
         areaInput.value = area || '';
         minInput.value = targetMin || '';
@@ -148,7 +152,7 @@ export class TaskList {
         let done = false;
         const save = () => {
             if (done) return; done = true;
-            this.callbacks.onEditSave(taskId, input.value, minInput.value, areaInput.value);
+            this.callbacks.onEditSave(taskId, input.value, minInput.value, areaInput.value, cdBtn.classList.contains('on'));
         };
         el.addEventListener('focusout', (e) => { if (!el.contains(e.relatedTarget)) save(); });
         el.addEventListener('keydown', (e) => {

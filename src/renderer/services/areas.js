@@ -13,9 +13,9 @@ export function listAreas(tasks) {
 }
 
 /**
- * 按分区分组：有分区的按名字排在前面，未分区的放最后。
- * 组内保持传入顺序（调用方先排好序再分组）。
- * @returns [{ area: string|null, tasks: [] }]
+ * 按分区分组。顺序：还有没做完的分区（按名字）→ 未分区 → 已全部完成的分区（按名字）。
+ * 未分区那组如果也全做完了，同样沉到最底。组内保持传入顺序（调用方先排好序再分组）。
+ * @returns [{ area: string|null, tasks: [], done: boolean }]
  */
 export function groupByArea(tasks) {
     const order = listAreas(tasks);
@@ -27,5 +27,7 @@ export function groupByArea(tasks) {
     });
     const sections = order.map(a => ({ area: a, tasks: map.get(a) }));
     if (rest.length) sections.push({ area: null, tasks: rest });
-    return sections;
+    sections.forEach(s => { s.done = s.tasks.every(t => t.completed); });
+    // 稳定排序：没做完的在前，内部保持「分区按名字、未分区在后」
+    return sections.filter(s => !s.done).concat(sections.filter(s => s.done));
 }
