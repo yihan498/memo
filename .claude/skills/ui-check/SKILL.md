@@ -6,7 +6,7 @@ description: Visually verify Memo's real UI after a change — launches an isola
 # ui-check: 看真实界面，而不只是跑单测
 
 **为什么要有它：** `npm test` 只覆盖纯函数（解析、分组、计时）。布局挤掉按钮、
-分区框没画出来、倒计时条不动这类问题，只有截图才看得到。手工做容易出三种事故，
+分区框没画出来、倒计时条不动这类问题，只有截图才看得到。手工做容易出四种事故，
 所以全部写进了脚本：
 
 | 事故 | 脚本里怎么防 |
