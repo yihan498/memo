@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { sortTodos, sortTodosByTime, dayGroup, weekday, quadrantOf, dueState, shortTime, dueReminders } from '../src/renderer/services/todoSort.js';
+import { sortTodos, sortTodosByTime, dayGroup, weekday, quadrantOf, dueState, shortTime, dueReminders, planReminders, planKey } from '../src/renderer/services/todoSort.js';
 
 const now = new Date(2026, 10, 3, 12, 0).getTime();
 const mk = (text, o = {}) => ({ id: text, text, completed: false, createdAt: '2026-11-01T00:00:00Z', ...o });
@@ -57,5 +57,17 @@ assert.equal(dueReminders([r({ remindBefore: 60, completed: true })], now).lengt
 assert.equal(dueReminders([r({ remindBefore: 60, remindedFor: '2026-11-03T13:00|60' })], now).length, 0); // 已提醒过
 assert.equal(dueReminders([r({ remindBefore: 60, remindedFor: '2026-11-03T12:30|60' })], now).length, 1); // 改了截止 → 重新提醒
 assert.equal(dueReminders([mk('d', { type: 'daily', dueAt: '2026-11-03T13:00', remindBefore: 60 })], now).length, 0);
+
+// 计划提醒：这个点去做，没有截止也会提醒
+const pl = (o) => mk('p', { type: 'todo', plannedAt: '2026-11-03T12:00', planRemind: 0, ...o });
+assert.equal(planReminders([pl()], now).length, 1);                                        // 到点
+assert.equal(planReminders([pl({ plannedAt: '2026-11-03T12:20', planRemind: 30 })], now).length, 1); // 提前 30 分钟
+assert.equal(planReminders([pl({ plannedAt: '2026-11-03T12:20' })], now).length, 0);       // 还没到
+assert.equal(planReminders([pl({ planRemind: null })], now).length, 0);                    // 不提醒
+assert.equal(planReminders([pl({ planRemind: undefined })], now).length, 0);               // 旧数据：不突然弹
+assert.equal(planReminders([pl({ completed: true })], now).length, 0);
+assert.equal(planReminders([pl({ plannedAt: '2026-11-02T20:00' })], now).length, 0);       // 错过 16 小时，不补弹
+const p1 = pl(); assert.equal(planReminders([{ ...p1, planRemindedFor: planKey(p1) }], now).length, 0); // 已提醒过
+assert.equal(planReminders([{ ...p1, planRemindedFor: '2026-11-03T09:00|0' }], now).length, 1);         // 改了时间 → 重新提醒
 
 console.log('todo: ALL PASS');

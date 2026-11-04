@@ -7,9 +7,10 @@
 //   日期     今天 明天 后天 大后天 今晚 明早 明晚 / 周五 这周五 下周一 / 11月8号 8号 11/8 / 月底 周末
 //   时间     下午3点 3点半 15:30 晚上8点15 / 只写时段：上午 下午 晚上…
 //   相对     两小时后 30分钟后
-//   截止 vs 计划：带「前 / 之前 / 截止 / ddl」→ 截止时间；带「提醒」→ 截止时间并到点提醒；否则 → 计划时间
+//   截止 vs 计划：带「前 / 之前 / 截止 / ddl」→ 截止时间（默认提前 1 小时提醒）；
+//                 否则 → 计划时间 =「这个点去做」，默认到点提醒（planRemind = 0）；「提前N…提醒」作用在这个时间上
 //
-// 返回 { text, area, important, urgent, dueAt, plannedAt, remindBefore, hits }
+// 返回 { text, area, important, urgent, dueAt, plannedAt, remindBefore, planRemind, hits }
 // dueAt / plannedAt 是 datetime-local 格式 'YYYY-MM-DDTHH:MM'；hits 是识别到的内容（给界面展示）
 
 const CN = { 零: 0, 〇: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
@@ -76,7 +77,7 @@ function resolveDate(word, now) {
 const minutesOf = (n, unit) => Math.round(cnNum(n) * (unit === '天' ? 1440 : unit.includes('小时') ? 60 : 1));
 
 export function parseTodo(input, now = new Date()) {
-    const out = { text: '', area: null, important: false, urgent: false, dueAt: null, plannedAt: null, remindBefore: null, hits: [] };
+    const out = { text: '', area: null, important: false, urgent: false, dueAt: null, plannedAt: null, remindBefore: null, planRemind: null, hits: [] };
     let s = ` ${input} `;
     const take = (re, fn) => { s = s.replace(re, (...m) => { fn(m); return ' '; }); };
 
@@ -140,15 +141,17 @@ export function parseTodo(input, now = new Date()) {
     }
 
     if (when) {
-        // 说了「提醒」但没说截止 → 当成截止时间，到点提醒（只有截止时间会弹通知）
-        const asDue = when.due || remindWord || out.remindBefore !== null;
+        // 没说截止的时间点 = 这个点去做 → 计划时间，默认到点提醒（不硬凑一个截止时间）
+        const asDue = when.due;
         if (asDue) out.dueAt = fmtLocal(when.at); else out.plannedAt = fmtLocal(when.at);
         out.hits.push(`${asDue ? '截止' : '计划'} ${fmtLocal(when.at).slice(5).replace('T', ' ')}`);
         if (asDue && out.remindBefore === null && !noRemind) out.remindBefore = remindWord ? 0 : 60;
+        if (!asDue) out.planRemind = noRemind ? null : (out.remindBefore ?? 0);
     }
     if (!out.dueAt) out.remindBefore = null; // 没有截止时间就没有截止提醒
     if (noRemind) out.remindBefore = null;
-    if (out.remindBefore !== null) out.hits.push(out.remindBefore === 0 ? '到点提醒' : `提前 ${fmtMin(out.remindBefore)}提醒`);
+    if (out.remindBefore !== null) out.hits.push(out.remindBefore === 0 ? '截止时提醒' : `截止前 ${fmtMin(out.remindBefore)}提醒`);
+    if (out.planRemind !== null) out.hits.push(out.planRemind === 0 ? '到点提醒' : `提前 ${fmtMin(out.planRemind)}提醒`);
 
     out.text = s.replace(/\s+/g, ' ')
         .replace(/^[\s，,。、；;:：]+|[\s，,。、；;:：]+$/g, '')

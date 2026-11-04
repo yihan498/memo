@@ -1,7 +1,18 @@
 // 零碎待办的新建 / 编辑表单
-import { REMIND_OPTIONS, weekday } from '../services/todoSort.js';
+import { REMIND_OPTIONS, PLAN_REMIND_OPTIONS, weekday } from '../services/todoSort.js';
 import { normArea } from '../services/areas.js';
 import { fmtMin } from '../services/quickParse.js';
+// 选中某个提前量；不在预设里（如解析出的提前 15 分钟）→ 临时加一项
+function setSelect(sel, options, value) {
+    sel.querySelectorAll('option[data-extra]').forEach(o => o.remove());
+    if (value && !options.some(o => o.value === value)) {
+        const o = document.createElement('option');
+        o.value = value; o.dataset.extra = '1'; o.textContent = `提前 ${fmtMin(Number(value))}`;
+        sel.appendChild(o);
+    }
+    sel.value = value;
+}
+
 export class TodoForm {
     constructor({ onSave }) {
         this.onSave = onSave;
@@ -21,6 +32,15 @@ export class TodoForm {
             if (this.fDue.value && this.fRemind.value === '' && !this.remindTouched) this.fRemind.value = '60';
         });
         this.fRemind.addEventListener('change', () => { this.remindTouched = true; });
+        // 计划时间 = 这个点去做：填了就默认到点提醒（没有截止也会叫你）
+        this.fPlanRemind = document.getElementById('fPlanRemind');
+        this.fPlanRemind.innerHTML = PLAN_REMIND_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+        this.fPlanned.addEventListener('change', () => {
+            if (this.fPlanned.value && this.fPlanRemind.value === '' && !this.planTouched) this.fPlanRemind.value = '0';
+            this.updateRemindFields();
+        });
+        this.fDue.addEventListener('change', () => this.updateRemindFields());
+        this.fPlanRemind.addEventListener('change', () => { this.planTouched = true; });
         this.editingId = null;
         this.wkPairs = [[this.fPlanned, document.getElementById('fPlannedWk')], [this.fDue, document.getElementById('fDueWk')]];
         this.wkPairs.forEach(([inp]) => inp.addEventListener('input', () => this.updateWeekdays()));
@@ -56,15 +76,12 @@ export class TodoForm {
         this.fPlanned.value = (task && task.plannedAt) || '';
         this.fDue.value = (task && task.dueAt) || '';
         const rb = task && task.remindBefore !== undefined && task.remindBefore !== null ? String(task.remindBefore) : '';
-        // 解析出的提前量不在下拉里（如提前 30 分钟）→ 临时加一项
-        this.fRemind.querySelectorAll('option[data-extra]').forEach(o => o.remove());
-        if (rb && !REMIND_OPTIONS.some(o => o.value === rb)) {
-            const o = document.createElement('option');
-            o.value = rb; o.dataset.extra = '1'; o.textContent = `提前 ${fmtMin(Number(rb))}`;
-            this.fRemind.appendChild(o);
-        }
-        this.fRemind.value = rb;
+        setSelect(this.fRemind, REMIND_OPTIONS, rb);
+        const pr = task && task.planRemind !== undefined && task.planRemind !== null ? String(task.planRemind) : '';
+        setSelect(this.fPlanRemind, PLAN_REMIND_OPTIONS, pr);
         this.remindTouched = !!task;
+        this.planTouched = !!task;
+        this.updateRemindFields();
         this.fImportant.classList.toggle('on', !!(task && task.important));
         this.fUrgent.classList.toggle('on', !!(task && task.urgent));
         this.fText.style.borderColor = '';
@@ -82,6 +99,12 @@ export class TodoForm {
         this.editingId = null;
     }
 
+    // 提醒下拉只在填了对应时间时显示，避免「截止提醒」和「计划提醒」混在一起
+    updateRemindFields() {
+        document.getElementById('fPlanRemindField').classList.toggle('hidden', !this.fPlanned.value);
+        document.getElementById('fRemindField').classList.toggle('hidden', !this.fDue.value);
+    }
+
     save() {
         const text = this.fText.value.trim();
         if (!text) {
@@ -95,6 +118,7 @@ export class TodoForm {
             plannedAt: this.fPlanned.value || null,
             dueAt: this.fDue.value || null,
             remindBefore: this.fDue.value && this.fRemind.value !== '' ? Number(this.fRemind.value) : null,
+            planRemind: this.fPlanned.value && this.fPlanRemind.value !== '' ? Number(this.fPlanRemind.value) : null,
             important: this.fImportant.classList.contains('on'),
             urgent: this.fUrgent.classList.contains('on')
         });

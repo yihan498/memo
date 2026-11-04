@@ -415,14 +415,18 @@
                     <input id="fArea" type="text" list="areaList" placeholder="选已有的，或输入新分区名">
                 </label>
                 <label class="field">
-                    <span>计划时间（打算什么时候做）</span>
+                    <span>计划时间（这个点去做，不是截止）</span>
                     <div class="dt-row"><input id="fPlanned" type="datetime-local"><b id="fPlannedWk" class="wk"></b></div>
                 </label>
-                <label class="field">
-                    <span>截止时间</span>
-                    <div class="dt-row"><input id="fDue" type="datetime-local"><b id="fDueWk" class="wk"></b></div>
+                <label class="field" id="fPlanRemindField">
+                    <span>计划提醒（到点叫你去做）</span>
+                    <select id="fPlanRemind"></select>
                 </label>
                 <label class="field">
+                    <span>截止时间（最晚什么时候，可不填）</span>
+                    <div class="dt-row"><input id="fDue" type="datetime-local"><b id="fDueWk" class="wk"></b></div>
+                </label>
+                <label class="field" id="fRemindField">
                     <span>截止提醒</span>
                     <select id="fRemind"></select>
                 </label>

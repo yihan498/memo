@@ -7,7 +7,7 @@ import { TaskInput } from './components/TaskInput.js';
 import { TodoForm } from './components/TodoForm.js';
 import { Records } from './components/Records.js';
 import { timerHtml } from './components/TaskItem.js';
-import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, shortTime } from './services/todoSort.js';
+import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, planReminders, planKey, shortTime } from './services/todoSort.js';
 import { normArea, listAreas, groupByArea } from './services/areas.js';
 import { parseTodo } from './services/quickParse.js';
 
@@ -82,10 +82,10 @@ class TodoWidgetApp {
         });
 
         this.records = new Records(() => this.state, {
-            // 日历上给某天加待办：预填「计划时间」为那天 09:00；要提醒就在表单里再填截止时间
+            // 日历上给某天加待办：预填「计划时间」为那天 09:00 + 到点提醒（时间在表单里改）
             onAddOnDate: (key) => this.todoForm.open(null, {
                 text: '', area: null, important: false, urgent: false, dueAt: null, remindBefore: null,
-                plannedAt: `${key}T09:00`, hits: [], title: `新建待办 · ${key.slice(5).replace('-', '/')}`
+                plannedAt: `${key}T09:00`, planRemind: 0, hits: [], title: `新建待办 · ${key.slice(5).replace('-', '/')}`
             })
         });
 
@@ -124,6 +124,15 @@ class TodoWidgetApp {
             const ids = new Set(due.map(t => t.id));
             this.state.tasks = this.state.tasks.map(t =>
                 ids.has(t.id) ? { ...t, remindedFor: t.dueAt + '|' + t.remindBefore } : t);
+            this.persist();
+        }
+
+        // 零碎待办的计划提醒（到点去做）
+        const plans = planReminders(this.state.tasks, now.getTime());
+        if (plans.length) {
+            plans.forEach(t => window.electronAPI.notify(`该做了：${t.text}`, `计划 ${shortTime(t.plannedAt)}${t.planRemind ? `（提前 ${t.planRemind} 分钟提醒）` : ''}`));
+            const ids = new Set(plans.map(t => t.id));
+            this.state.tasks = this.state.tasks.map(t => (ids.has(t.id) ? { ...t, planRemindedFor: planKey(t) } : t));
             this.persist();
         }
 

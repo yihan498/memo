@@ -128,6 +128,33 @@ export function remindAtMs(task) {
     return due - Number(task.remindBefore) * 60 * 1000;
 }
 
+// 计划提醒：计划时间 = 「这个点去做」，没有截止也该叫你。planRemind 为提前分钟数（0 = 到点），null/undefined = 不提醒
+export const PLAN_REMIND_OPTIONS = [
+    { value: '', label: '不提醒' },
+    { value: '0', label: '到点提醒' },
+    { value: '10', label: '提前 10 分钟' },
+    { value: '30', label: '提前 30 分钟' },
+    { value: '60', label: '提前 1 小时' }
+];
+const PLAN_STALE_MS = 12 * 3600 * 1000; // 错过超过 12 小时（如电脑关机）就不补弹了
+
+export function planRemindAtMs(task) {
+    const at = toMs(task.plannedAt);
+    if (at === null || task.planRemind === null || task.planRemind === undefined || task.planRemind === '') return null;
+    return at - Number(task.planRemind) * 60 * 1000;
+}
+
+export const planKey = t => t.plannedAt + '|' + t.planRemind;
+
+/** 返回现在该弹「该去做了」、且还没提醒过的待办 */
+export function planReminders(tasks, now = Date.now()) {
+    return tasks.filter(t => {
+        if (t.type !== 'todo' || t.completed) return false;
+        const at = planRemindAtMs(t);
+        return at !== null && at <= now && now - at < PLAN_STALE_MS && t.planRemindedFor !== planKey(t);
+    });
+}
+
 /** 返回现在该弹提醒、且还没提醒过的待办 */
 export function dueReminders(tasks, now = Date.now()) {
     return tasks.filter(t => {

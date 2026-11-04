@@ -1,5 +1,5 @@
 import { escapeHtml } from '../utils/helpers.js';
-import { dueState, isUrgent, shortTime, REMIND_OPTIONS } from '../services/todoSort.js';
+import { dueState, isUrgent, shortTime, REMIND_OPTIONS, PLAN_REMIND_OPTIONS } from '../services/todoSort.js';
 import { elapsedMs } from '../services/dailyManager.js';
 
 const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
@@ -73,7 +73,13 @@ export function createTaskElement(task, ctx = {}) {
             const opt = REMIND_OPTIONS.find(o => o.value !== '' && Number(o.value) === task.remindBefore);
             if (opt && !task.completed) meta.push(`<span title="截止提醒">⏰ ${opt.label}</span>`);
         }
-        if (task.plannedAt) when.push(`<span class="w plan"><i>计划</i><b>${shortTime(task.plannedAt)}</b></span>`);
+        if (task.plannedAt) {
+            when.push(`<span class="w plan"><i>计划</i><b>${shortTime(task.plannedAt)}</b></span>`);
+            if (!task.completed && task.planRemind !== null && task.planRemind !== undefined) {
+                const opt = PLAN_REMIND_OPTIONS.find(o => o.value !== '' && Number(o.value) === task.planRemind);
+                meta.push(`<span title="计划提醒：到点叫你去做">🔔 ${opt ? opt.label : `提前 ${task.planRemind} 分钟`}</span>`);
+            }
+        }
     }
     if (task.completed && task.completedAt) {
         meta.push(`<span>完成于 ${hm(task.completedAt)}</span>`);

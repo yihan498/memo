@@ -14,6 +14,7 @@ description: Visually verify Memo's real UI after a change — launches an isola
 | 测试数据写进用户的真实数据 | `TODO_DATA_DIR=<项目>/.testdata`，每次运行先清空（已 gitignore） |
 | 测试窗口抢焦点，用户打的字落进去 | 调试实例用 `showInactive()` 显示；运行结束打印 `FOCUS unchanged/CHANGED` |
 | 误杀用户正在用的 Memo | 只杀「路径在本项目下 **且** 启动时间晚于本次运行」的 electron 进程 |
+| 截到用户的私人屏幕内容 | 用 `PrintWindow` 只取测试窗口自身的内容，**不用 `CopyFromScreen`**（后者按屏幕坐标截，测试窗口被挡住时截到的是别人的窗口——真出过事） |
 
 ## 用法（在 WSL 里，项目根目录）
 
@@ -63,4 +64,5 @@ todo 用 `dueAt / plannedAt / remindBefore / important / urgent / area`。
   中文注释会把语法搞坏（报 `MissingCatchOrFinally`）。用 Write 改完要重新加 BOM：
   `printf '\xef\xbb\xbf' | cat - capture.ps1 > t && mv t capture.ps1`
 - 显示器缩放约 200%。脚本按物理像素截图，默认缩小一半输出
+- 截图里如果出现的不是 Memo，立刻删掉，不要描述内容，然后排查截图方式
 - 鼠标悬停在测试窗口上时，截图里可能带 tooltip，属正常

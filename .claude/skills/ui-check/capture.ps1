@@ -20,9 +20,10 @@ public static class W32 {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
+    [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
 }
 "@
-[W32]::SetProcessDPIAware() | Out-Null   # 拿物理像素坐标，和 CopyFromScreen 一致
+[W32]::SetProcessDPIAware() | Out-Null   # 拿物理像素尺寸，和 PrintWindow 输出一致
 
 $electron = Join-Path $Project 'node_modules\electron\dist\electron.exe'
 if (-not (Test-Path $electron)) { throw "electron.exe not found: $electron (先在 Windows 侧 npm install)" }
@@ -67,7 +68,12 @@ try {
         $w = $r.R - $r.L; $hh = $r.B - $r.T
         $bmp = New-Object System.Drawing.Bitmap $w, $hh
         $g = [System.Drawing.Graphics]::FromImage($bmp)
-        $g.CopyFromScreen($r.L, $r.T, 0, 0, $bmp.Size)
+        # PrintWindow 只取这个窗口自己的内容：被别的窗口挡住也不会截到别人的屏幕（隐私 + 准确）
+        # 2 = PW_RENDERFULLCONTENT（Chromium / Electron 需要）
+        $hdc = $g.GetHdc()
+        $ok = [W32]::PrintWindow($script:main, $hdc, 2)
+        $g.ReleaseHdc($hdc)
+        if (-not $ok) { Write-Output "SHOT $i FAIL: PrintWindow failed"; $g.Dispose(); $bmp.Dispose(); continue }
         $outBmp = New-Object System.Drawing.Bitmap $bmp, ([int]($w * $Scale)), ([int]($hh * $Scale))
         $file = Join-Path $Out ("shot{0}.png" -f $i)
         $outBmp.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
