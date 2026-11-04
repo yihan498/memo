@@ -9,6 +9,7 @@ import { Records } from './components/Records.js';
 import { timerHtml } from './components/TaskItem.js';
 import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, shortTime } from './services/todoSort.js';
 import { normArea, listAreas, groupByArea } from './services/areas.js';
+import { parseTodo } from './services/quickParse.js';
 
 // 需要持久化的状态字段 → electron-store 的 key
 const PERSIST_KEYS = ['tasks', 'view', 'lastResetDate', 'dailyHistory', 'checkTime', 'lastNotifiedDate', 'todoSort', 'todoLog'];
@@ -70,6 +71,7 @@ class TodoWidgetApp {
         this.taskInput = new TaskInput({
             onAddTask: (text, min, area, countdown) => this.handleAddTask(text, min, area, countdown),
             onOpenForm: () => this.todoForm.open(),
+            onQuickAdd: (text) => this.todoForm.open(null, parseTodo(text)),
             onClearCompleted: () => this.handleClearCompleted()
         });
 
@@ -333,7 +335,7 @@ class TodoWidgetApp {
         document.getElementById('emptyTitle').textContent =
             view === 'daily' ? '还没有每日常规' : '没有待办，清爽！';
         document.getElementById('emptySub').textContent =
-            view === 'daily' ? '在下方输入，想计时就在右边填分钟数' : '点下方「+ 添加待办」或按 Ctrl+N';
+            view === 'daily' ? '在下方输入，想计时就在右边填分钟数' : '在下方用一句话添加，如：周五前交报告 #产品';
         document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.sort === this.state.todoSort));
         // 分区候选：两个页面共用已有的分区名
         // 只在变化时重建，避免每 30 秒 tick 打断正在展开的下拉

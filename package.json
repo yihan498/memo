@@ -11,7 +11,7 @@
     "build:electron-builder": "electron-builder",
     "build:win": "electron-builder --win",
     "dist": "npm run build",
-    "test": "node tests/daily.test.mjs && node tests/todo.test.mjs && node tests/area.test.mjs"
+    "test": "node tests/daily.test.mjs && node tests/todo.test.mjs && node tests/area.test.mjs && node tests/parse.test.mjs"
   },
   "keywords": [
     "electron",

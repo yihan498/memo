@@ -193,6 +193,7 @@
         .input-row input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; padding: 7px 0; }
         .input-row input::placeholder { color: var(--muted); }
         .add-btn { flex-shrink: 0; width: 26px; height: 26px; border-radius: 6px; background: var(--accent); color: var(--on-accent); font-size: 17px; line-height: 1; }
+        .parsed { margin: -4px 0 12px; padding: 6px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-size: 11px; line-height: 1.5; }
         .add-todo-btn { width: 100%; padding: 8px; border-radius: 8px; background: var(--accent); color: var(--on-accent); font-weight: 600; }
         .add-todo-btn:hover, .add-btn:hover { filter: brightness(1.08); }
         .footer-meta { display: flex; justify-content: space-between; margin-top: 6px; padding: 0 2px; font-size: 11px; color: var(--muted); }
@@ -352,7 +353,10 @@
                     <input id="targetInput" class="target-in" type="number" min="1" max="1440" placeholder="分钟" title="想计时就填目标分钟数，留空 = 普通勾选">
                     <button id="addBtn" class="add-btn" title="添加">+</button>
                 </div>
-                <button id="openFormBtn" class="add-todo-btn hidden" title="Ctrl+N">+ 添加待办</button>
+                <div id="todoInputRow" class="input-row hidden">
+                    <input id="quickInput" type="text" placeholder="一句话添加：周五前交报告 #产品 重要" title="回车后自动识别时间 / 分区 / 优先级 / 提醒，打开表单核对后再保存">
+                    <button id="openFormBtn" class="add-btn" title="回车 = 识别并打开表单；输入框为空时打开空白表单（Ctrl+N）">+</button>
+                </div>
                 <div class="footer-meta">
                     <span id="taskCount">0 项</span>
                     <button id="clearCompletedBtn" class="link-btn hidden" title="Ctrl+Shift+C">清除已完成</button>
@@ -364,6 +368,7 @@
         <div id="todoForm" class="form-overlay no-drag hidden">
             <div class="form-scroll">
                 <div id="formTitle" class="form-title">新建待办</div>
+                <p id="fParsed" class="parsed hidden"></p>
                 <label class="field">
                     <span>具体事项 <b class="req">*</b></span>
                     <textarea id="fText" rows="3" placeholder="要做什么？"></textarea>
@@ -423,6 +428,9 @@
                 <div class="help-row"><span>保存</span><kbd>Ctrl Enter / Ctrl S</kbd></div>
                 <div class="help-row"><span>重要 / 紧急</span><kbd>Alt I / Alt U</kbd></div>
                 <div class="help-row"><span>取消</span><kbd>Esc</kbd></div>
+                <h4>一句话添加（待办页底部）</h4>
+                <div class="help-row"><span>周五前交报告 #产品 重要 提前1天提醒</span></div>
+                <div class="help-row"><span>明天下午3点开会 / 两小时后提醒我喝水</span></div>
             </div>
         </div>
     </div>

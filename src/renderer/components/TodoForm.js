@@ -1,6 +1,7 @@
 // 零碎待办的新建 / 编辑表单
 import { REMIND_OPTIONS, weekday } from '../services/todoSort.js';
 import { normArea } from '../services/areas.js';
+import { fmtMin } from '../services/quickParse.js';
 export class TodoForm {
     constructor({ onSave }) {
         this.onSave = onSave;
@@ -13,6 +14,7 @@ export class TodoForm {
         this.fUrgent = document.getElementById('fUrgent');
         this.fRemind = document.getElementById('fRemind');
         this.fArea = document.getElementById('fArea');
+        this.fParsed = document.getElementById('fParsed');
         this.fRemind.innerHTML = REMIND_OPTIONS.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
         // 填了截止时间但还没选提醒 → 默认提前 1 小时
         this.fDue.addEventListener('change', () => {
@@ -37,14 +39,30 @@ export class TodoForm {
 
     get isOpen() { return !this.el.classList.contains('hidden'); }
 
-    open(task = null) {
+    /**
+     * @param task 编辑已有待办；null = 新建
+     * @param parsed 一句话解析结果（新建时预填，hits 显示在顶部供核对）
+     */
+    open(task = null, parsed = null) {
         this.editingId = task ? task.id : null;
-        this.title.textContent = task ? '编辑待办' : '新建待办';
+        this.title.textContent = task ? '编辑待办' : parsed ? '新建待办 · 已自动识别' : '新建待办';
+        this.fParsed.textContent = parsed
+            ? (parsed.hits.length ? `识别到：${parsed.hits.join(' · ')}` : '没识别到时间 / 分区 / 优先级，可以手动补')
+            : '';
+        this.fParsed.classList.toggle('hidden', !parsed);
+        if (parsed) task = { ...parsed, id: null };
         this.fText.value = task ? task.text : '';
         this.fArea.value = (task && task.area) || '';
         this.fPlanned.value = (task && task.plannedAt) || '';
         this.fDue.value = (task && task.dueAt) || '';
         const rb = task && task.remindBefore !== undefined && task.remindBefore !== null ? String(task.remindBefore) : '';
+        // 解析出的提前量不在下拉里（如提前 30 分钟）→ 临时加一项
+        this.fRemind.querySelectorAll('option[data-extra]').forEach(o => o.remove());
+        if (rb && !REMIND_OPTIONS.some(o => o.value === rb)) {
+            const o = document.createElement('option');
+            o.value = rb; o.dataset.extra = '1'; o.textContent = `提前 ${fmtMin(Number(rb))}`;
+            this.fRemind.appendChild(o);
+        }
         this.fRemind.value = rb;
         this.remindTouched = !!task;
         this.fImportant.classList.toggle('on', !!(task && task.important));

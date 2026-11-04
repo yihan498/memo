@@ -36,6 +36,7 @@ function createWindow() {
 
   // Create the browser window
   mainWindow = new BrowserWindow({
+    show: !process.env.TODO_DATA_DIR, // 调试实例稍后用 showInactive 显示
     width: bounds.width,
     height: bounds.height,
     x: bounds.x,
@@ -60,6 +61,19 @@ function createWindow() {
 
   // Load the app
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  // 调试实例（设了 TODO_DATA_DIR）：显示时不抢焦点，避免你在别处打字时按键落进测试窗口；
+  // TODO_DEBUG_EVAL 指向一个 js 文件时，页面加载后在渲染进程执行它（模拟输入用）
+  if (process.env.TODO_DATA_DIR) {
+    mainWindow.once('ready-to-show', () => mainWindow.showInactive());
+    if (process.env.TODO_DEBUG_EVAL) {
+      mainWindow.webContents.once('did-finish-load', () => {
+        setTimeout(() => {
+          mainWindow.webContents.executeJavaScript(require('fs').readFileSync(process.env.TODO_DEBUG_EVAL, 'utf8')).catch(e => console.error(e));
+        }, 1500);
+      });
+    }
+  }
 
   // Aggressively enforce always on top and workspaces
   if (alwaysOnTop) {

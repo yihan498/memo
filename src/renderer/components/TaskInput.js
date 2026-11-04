@@ -27,7 +27,16 @@ export class TaskInput {
         };
         [this.taskInput, this.areaInput, this.targetInput].forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); }));
         document.getElementById('addBtn').addEventListener('click', submit);
-        this.openFormBtn.addEventListener('click', () => this.callbacks.onOpenForm());
+        // 待办页：一句话输入 → 回车解析并打开表单；空着点 + 打开空白表单
+        this.todoRow = document.getElementById('todoInputRow');
+        this.quickInput = document.getElementById('quickInput');
+        const quick = () => {
+            const text = this.quickInput.value.trim();
+            this.quickInput.value = '';
+            if (text) this.callbacks.onQuickAdd(text); else this.callbacks.onOpenForm();
+        };
+        this.quickInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); quick(); } }); // 阻止回车落进表单的文本框
+        this.openFormBtn.addEventListener('click', quick);
         this.clearBtn.addEventListener('click', () => this.requestClear());
     }
 
@@ -54,7 +63,7 @@ export class TaskInput {
     setView(view) {
         this.footer.classList.toggle('hidden', view === 'records');
         this.inputRow.classList.toggle('hidden', view !== 'daily');
-        this.openFormBtn.classList.toggle('hidden', view !== 'todo');
+        this.todoRow.classList.toggle('hidden', view !== 'todo');
     }
 
     updateStats(tasks, view) {
@@ -66,5 +75,6 @@ export class TaskInput {
 
     focus() {
         if (!this.inputRow.classList.contains('hidden')) this.taskInput.focus();
+        else if (!this.todoRow.classList.contains('hidden')) this.quickInput.focus();
     }
 }
