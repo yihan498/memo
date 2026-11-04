@@ -48,7 +48,7 @@ function createWindow() {
     transparent: true,
     alwaysOnTop: alwaysOnTop,
     resizable: true,
-    skipTaskbar: false,
+    skipTaskbar: true, // 只在托盘显示，不占任务栏（托盘图标 / Ctrl+Alt+D 呼出）
     icon: path.join(__dirname, '..', 'assets', 'icon.ico'), // Set application icon
     webPreferences: {
       nodeIntegration: false,
