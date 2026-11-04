@@ -92,4 +92,26 @@ assert.deepEqual(rec.perTask.map(p => [p.text, p.done, p.total]), [['B', 1, 2], 
 assert.deepEqual(r.presetRange('7', st, now), ['2026-10-28', '2026-11-03']);
 assert.deepEqual(r.presetRange('all', st, now), ['2026-10-01', '2026-11-03']);
 assert.equal(r.fmtMin(95), '1 小时 35 分');
+
+// --- 月历 ---
+assert.equal(r.shiftMonth('2026-01', -1), '2025-12');
+assert.equal(r.shiftMonth('2026-11', 2), '2027-01');
+const st2 = { ...st, tasks: st.tasks.concat([
+    { id: 'p', type: 'todo', text: '计划', completed: false, plannedAt: '2026-11-05T09:00' },
+    { id: 'd', type: 'todo', text: '截止', completed: false, dueAt: '2026-11-02T18:00' },
+    { id: 'z', type: 'todo', text: '已完成不重复', completed: true, dueAt: '2026-11-05T18:00' }
+]) };
+const mo = r.buildMonth(st2, '2026-11', now);
+assert.equal(mo.cells.length % 7, 0);
+assert.equal(mo.cells[0].key, '2026-10-26');               // 2026-11-01 是周日 → 前面补 6 天，周一开头
+const cell = k => mo.cells.find(x => x.key === k);
+assert.equal(cell('2026-11-01').routine.done, 2);
+assert.ok(cell('2026-11-03').isToday && cell('2026-11-03').routine.today);
+assert.ok(cell('2026-11-04').future && !cell('2026-11-04').routine);
+assert.equal(cell('2026-10-31').routine, null);               // 上月格子不带常规
+assert.deepEqual(cell('2026-11-02').todos.map(x => [x.text, x.kind]), [['x', 'done'], ['截止', 'overdue']]);
+assert.deepEqual(cell('2026-11-05').todos.map(x => x.kind), ['planned']);
+assert.equal(mo.summary.todoDone, 1);
+const dd = r.dayDetail(st2, '2026-11-02', now);
+assert.equal(dd.week, '周一'); assert.equal(dd.routine.done, 1); assert.equal(dd.todos.length, 2);
 console.log('ALL PASS');

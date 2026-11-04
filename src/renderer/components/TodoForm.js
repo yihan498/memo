@@ -45,11 +45,11 @@ export class TodoForm {
      */
     open(task = null, parsed = null) {
         this.editingId = task ? task.id : null;
-        this.title.textContent = task ? '编辑待办' : parsed ? '新建待办 · 已自动识别' : '新建待办';
+        this.title.textContent = task ? '编辑待办' : parsed ? (parsed.title || '新建待办 · 已自动识别') : '新建待办';
         this.fParsed.textContent = parsed
             ? (parsed.hits.length ? `识别到：${parsed.hits.join(' · ')}` : '没识别到时间 / 分区 / 优先级，可以手动补')
             : '';
-        this.fParsed.classList.toggle('hidden', !parsed);
+        this.fParsed.classList.toggle('hidden', !parsed || !!parsed.title);
         if (parsed) task = { ...parsed, id: null };
         this.fText.value = task ? task.text : '';
         this.fArea.value = (task && task.area) || '';

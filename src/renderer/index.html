@@ -257,6 +257,43 @@
         .chip.bad { background: var(--bad-soft); color: var(--bad); }
         .chip em { font-style: normal; font-weight: 600; }
         .chip small { display: block; font-size: 9px; opacity: .8; }
+        /* 月历 */
+        .cal-nav { display: flex; align-items: center; gap: 6px; }
+        .cal-nav b { font-size: 13px; min-width: 84px; text-align: center; font-variant-numeric: tabular-nums; }
+        .cal-btn { width: 24px; height: 24px; border-radius: 6px; font-size: 16px; line-height: 1; color: var(--muted); }
+        .cal-btn:hover { color: var(--accent); background: var(--accent-soft); }
+        .cal-today { margin-left: auto; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+        .cal-w { text-align: center; font-size: 10px; color: var(--muted); padding: 2px 0; }
+        .cal-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; min-height: 46px; padding: 4px 0 3px; border-radius: 7px; background: var(--soft); color: var(--fg); font-variant-numeric: tabular-nums; }
+        .cal-cell:hover { box-shadow: inset 0 0 0 1px var(--line); }
+        .cal-cell.out { opacity: .35; }
+        .cal-cell.st-ok { background: var(--ok-soft); }
+        .cal-cell.st-miss { background: var(--bad-soft); }
+        .cal-cell.today .cal-d { background: var(--accent); color: var(--on-accent); border-radius: 50%; }
+        .cal-cell.sel { box-shadow: inset 0 0 0 1.5px var(--accent); }
+        .cal-d { width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 11px; font-weight: 600; }
+        .cal-m { font-size: 9px; height: 11px; line-height: 11px; color: var(--muted); }
+        .st-ok .cal-m { color: var(--ok); font-weight: 700; } .st-miss .cal-m { color: var(--bad); font-weight: 700; }
+        .cal-dots { display: flex; gap: 2px; height: 5px; align-items: center; }
+        .cal-dots i, .cal-legend .dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+        .cal-dots b { font-size: 8px; line-height: 5px; color: var(--muted); }
+        .done { --c: var(--ok); } .due { --c: var(--accent); } .overdue { --c: var(--bad); } .planned { --c: var(--muted); }
+        .cal-dots i, .cal-legend .dot { background: var(--c); }
+        .cal-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 6px 2px 0; font-size: 10px; color: var(--muted); }
+        .cal-legend span { display: inline-flex; align-items: center; gap: 3px; }
+        .cal-legend .sw { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+        .cal-legend .sw.ok { background: var(--ok-soft); box-shadow: inset 0 0 0 1px var(--ok); }
+        .cal-legend .sw.miss { background: var(--bad-soft); box-shadow: inset 0 0 0 1px var(--bad); }
+        .cal-detail { margin-top: 10px; padding: 9px 10px; border-radius: 9px; border: 1px solid var(--line); }
+        .cal-detail .chips { margin-bottom: 6px; }
+        .cal-todos { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
+        .cal-todo { display: flex; align-items: baseline; gap: 6px; font-size: 12px; }
+        .cal-todo .tag { flex-shrink: 0; font-size: 10px; padding: 0 5px; border-radius: 4px; color: var(--c); box-shadow: inset 0 0 0 1px var(--c); font-variant-numeric: tabular-nums; }
+        .cal-todo .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cal-todo.done .txt { color: var(--muted); text-decoration: line-through; }
+        .cal-none { margin: 2px 0 6px; font-size: 11px; color: var(--muted); }
+        .cal-add { font-size: 11px; color: var(--muted); padding: 2px 0; }
         .rec-empty { color: var(--muted); font-size: 12px; text-align: center; margin-top: 30px; }
 
         /* 快捷键帮助 */
@@ -336,16 +373,11 @@
             </div>
 
             <div id="recordsView" class="records no-drag hidden">
-                <div class="rec-top">
-                    <div class="seg">
-                        <button class="seg-btn rec-preset" data-p="7">近 7 天</button>
-                        <button class="seg-btn rec-preset" data-p="30">近 30 天</button>
-                        <button class="seg-btn rec-preset" data-p="month">本月</button>
-                        <button class="seg-btn rec-preset" data-p="all">全部</button>
-                    </div>
-                    <div class="rec-range">
-                        <input id="recFrom" type="date"><span>至</span><input id="recTo" type="date">
-                    </div>
+                <div class="rec-top cal-nav">
+                    <button id="calPrev" class="cal-btn" title="上个月（←）">‹</button>
+                    <b id="calTitle"></b>
+                    <button id="calNext" class="cal-btn" title="下个月（→）">›</button>
+                    <button id="calToday" class="seg-btn cal-today" title="回到今天（Ctrl L）">今天</button>
                 </div>
                 <div id="recBody" class="rec-body"></div>
             </div>
@@ -417,7 +449,8 @@
                 <div class="help-row"><span>新建</span><kbd>Ctrl N</kbd></div>
                 <div class="help-row"><span>切换 常规 / 待办 / 记录</span><kbd>Ctrl 1 2 3</kbd></div>
                 <div class="help-row"><span>下一页 / 上一页</span><kbd>Ctrl (Shift) Tab</kbd></div>
-                <div class="help-row"><span>切换排序 / 记录范围</span><kbd>Ctrl L</kbd></div>
+                <div class="help-row"><span>切换排序 / 记录回到今天</span><kbd>Ctrl L</kbd></div>
+                <div class="help-row"><span>记录页翻月</span><kbd>← →</kbd></div>
                 <div class="help-row"><span>置顶</span><kbd>Ctrl P</kbd></div>
                 <div class="help-row"><span>深色 / 浅色</span><kbd>Ctrl T</kbd></div>
                 <div class="help-row"><span>收起 / 展开</span><kbd>Ctrl M</kbd></div>

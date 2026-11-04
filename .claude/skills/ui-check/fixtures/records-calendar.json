@@ -1,0 +1,231 @@
+{
+  "view": "records",
+  "lastResetDate": "__TODAY__",
+  "dailyHistory": {
+    "__DAY_-1__": {
+      "total": 3,
+      "done": 3,
+      "missed": [],
+      "items": [
+        {
+          "text": "写产品文档",
+          "done": true,
+          "targetMin": 60,
+          "minutes": 60
+        },
+        {
+          "text": "背单词",
+          "done": true
+        },
+        {
+          "text": "晨跑",
+          "done": true
+        }
+      ]
+    },
+    "__DAY_-2__": {
+      "total": 3,
+      "done": 2,
+      "missed": [
+        "背单词"
+      ],
+      "items": [
+        {
+          "text": "写产品文档",
+          "done": true,
+          "targetMin": 60,
+          "minutes": 60
+        },
+        {
+          "text": "背单词",
+          "done": false
+        },
+        {
+          "text": "晨跑",
+          "done": true
+        }
+      ]
+    },
+    "__DAY_-3__": {
+      "total": 3,
+      "done": 3,
+      "missed": [],
+      "items": [
+        {
+          "text": "写产品文档",
+          "done": true,
+          "targetMin": 60,
+          "minutes": 60
+        },
+        {
+          "text": "背单词",
+          "done": true
+        },
+        {
+          "text": "晨跑",
+          "done": true
+        }
+      ]
+    },
+    "__DAY_-4__": {
+      "total": 3,
+      "done": 1,
+      "missed": [
+        "背单词",
+        "晨跑"
+      ],
+      "items": [
+        {
+          "text": "写产品文档",
+          "done": true,
+          "targetMin": 60,
+          "minutes": 60
+        },
+        {
+          "text": "背单词",
+          "done": false
+        },
+        {
+          "text": "晨跑",
+          "done": false
+        }
+      ]
+    },
+    "__DAY_-5__": {
+      "total": 3,
+      "done": 3,
+      "missed": [],
+      "items": [
+        {
+          "text": "写产品文档",
+          "done": true,
+          "targetMin": 60,
+          "minutes": 60
+        },
+        {
+          "text": "背单词",
+          "done": true
+        },
+        {
+          "text": "晨跑",
+          "done": true
+        }
+      ]
+    },
+    "__DAY_-6__": {
+      "total": 3,
+      "done": 3,
+      "missed": [],
+      "items": [
+        {
+          "text": "写产品文档",
+          "done": true,
+          "targetMin": 60,
+          "minutes": 60
+        },
+        {
+          "text": "背单词",
+          "done": true
+        },
+        {
+          "text": "晨跑",
+          "done": true
+        }
+      ]
+    },
+    "__DAY_-8__": {
+      "total": 3,
+      "done": 2,
+      "missed": [
+        "晨跑"
+      ],
+      "items": [
+        {
+          "text": "写产品文档",
+          "done": true,
+          "targetMin": 60,
+          "minutes": 60
+        },
+        {
+          "text": "背单词",
+          "done": true
+        },
+        {
+          "text": "晨跑",
+          "done": false
+        }
+      ]
+    }
+  },
+  "tasks": [
+    {
+      "id": "d1",
+      "type": "daily",
+      "text": "写产品文档",
+      "targetMin": 60,
+      "sessions": [],
+      "runningSince": null,
+      "completed": true,
+      "createdAt": "__AGO_900000__",
+      "completedAt": "__AGO_600__"
+    },
+    {
+      "id": "d2",
+      "type": "daily",
+      "text": "背单词",
+      "completed": false,
+      "createdAt": "__AGO_900000__",
+      "completedAt": null
+    },
+    {
+      "id": "d3",
+      "type": "daily",
+      "text": "晨跑",
+      "completed": true,
+      "createdAt": "__AGO_900000__",
+      "completedAt": "__AGO_3600__"
+    },
+    {
+      "id": "t1",
+      "type": "todo",
+      "text": "交周报",
+      "dueAt": "__LOCAL_+1440__",
+      "remindBefore": 60,
+      "completed": false,
+      "createdAt": "__AGO_7200__",
+      "completedAt": null
+    },
+    {
+      "id": "t2",
+      "type": "todo",
+      "text": "还图书馆的书",
+      "dueAt": "__LOCAL_-2880__",
+      "completed": false,
+      "createdAt": "__AGO_7200__",
+      "completedAt": null
+    },
+    {
+      "id": "t3",
+      "type": "todo",
+      "text": "约导师聊开题",
+      "plannedAt": "__LOCAL_+4320__",
+      "completed": false,
+      "createdAt": "__AGO_7200__",
+      "completedAt": null
+    }
+  ],
+  "todoLog": [
+    {
+      "id": "x1",
+      "text": "交水电费",
+      "completedAt": "__AGO_90000__",
+      "dueAt": null
+    },
+    {
+      "id": "x2",
+      "text": "改简历",
+      "completedAt": "__AGO_95000__",
+      "dueAt": null
+    }
+  ]
+}

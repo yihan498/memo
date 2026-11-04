@@ -71,3 +71,69 @@ export function fmtMin(m) {
     const h = Math.floor(m / 60), r = m % 60;
     return h ? `${h} 小时${r ? ' ' + r + ' 分' : ''}` : `${r} 分`;
 }
+
+// --- 月历 ---
+
+const pad2 = n => String(n).padStart(2, '0');
+const hmOf = iso => { const d = new Date(iso); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+
+/** 'YYYY-MM' 加减 n 个月 */
+export function shiftMonth(ym, n) {
+    const [y, m] = ym.split('-').map(Number);
+    const d = new Date(y, m - 1 + n, 1);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+}
+
+/**
+ * 每天的待办（像日历里的提醒事项）：Map<'YYYY-MM-DD', [{ id, text, kind, time }]>
+ * kind：done 当天完成 / due 当天截止 / overdue 截止已过还没做 / planned 计划在当天做
+ */
+export function todosByDay(state, now = new Date()) {
+    const map = new Map();
+    const add = (key, e) => { if (!map.has(key)) map.set(key, []); map.get(key).push(e); };
+    for (const l of state.todoLog || []) {
+        if (l.completedAt) add(dateKey(new Date(l.completedAt)), { id: l.id, text: l.text, kind: 'done', time: hmOf(l.completedAt) });
+    }
+    for (const t of state.tasks || []) {
+        if (t.type !== 'todo' || t.completed) continue;
+        if (t.plannedAt) add(t.plannedAt.slice(0, 10), { id: t.id, text: t.text, kind: 'planned', time: t.plannedAt.slice(11, 16) });
+        if (t.dueAt) add(t.dueAt.slice(0, 10), { id: t.id, text: t.text, kind: new Date(t.dueAt) < now ? 'overdue' : 'due', time: t.dueAt.slice(11, 16) });
+    }
+    for (const list of map.values()) list.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    return map;
+}
+
+/**
+ * 一个月的日历：周一开头的整周格子 + 本月统计。
+ * cells[i] = { key, day, inMonth, isToday, future, routine (同 buildRecords 的 day 或 null), todos }
+ */
+export function buildMonth(state, ym, now = new Date()) {
+    const [y, m] = ym.split('-').map(Number);
+    const dim = new Date(y, m, 0).getDate();
+    const first = `${ym}-01`, last = `${ym}-${pad2(dim)}`;
+    const today = dateKey(now);
+    const rec = buildRecords(state, first, last, now);
+    const routineOf = new Map(rec.days.map(d => [d.key, d]));
+    const todos = todosByDay(state, now);
+    const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7; // 周一 = 0
+    const count = Math.ceil((lead + dim) / 7) * 7;
+    const cells = [];
+    for (let i = 0; i < count; i++) {
+        const key = shiftKey(first, i - lead);
+        const inMonth = key >= first && key <= last;
+        cells.push({
+            key, day: Number(key.slice(8)), inMonth,
+            isToday: key === today, future: key > today,
+            routine: inMonth ? routineOf.get(key) || null : null,
+            todos: todos.get(key) || []
+        });
+    }
+    return { ym, cells, summary: rec.summary, perTask: rec.perTask };
+}
+
+/** 某一天的明细（点日历格子时用） */
+export function dayDetail(state, key, now = new Date()) {
+    const today = dateKey(now);
+    const routine = key === today ? todayRecord(state, now) : (state.dailyHistory || {})[key] || null;
+    return { key, week: weekdayOfKey(key), today: key === today, future: key > today, routine, todos: todosByDay(state, now).get(key) || [] };
+}

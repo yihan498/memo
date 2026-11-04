@@ -81,7 +81,13 @@ class TodoWidgetApp {
             onSave: (id, attrs) => this.handleSaveTodo(id, attrs)
         });
 
-        this.records = new Records(() => this.state);
+        this.records = new Records(() => this.state, {
+            // 日历上给某天加待办：预填「计划时间」为那天 09:00；要提醒就在表单里再填截止时间
+            onAddOnDate: (key) => this.todoForm.open(null, {
+                text: '', area: null, important: false, urgent: false, dueAt: null, remindBefore: null,
+                plannedAt: `${key}T09:00`, hits: [], title: `新建待办 · ${key.slice(5).replace('-', '/')}`
+            })
+        });
 
         this.setupTabs();
         this.setupDailyBar();
@@ -428,7 +434,11 @@ class TodoWidgetApp {
 
             // 列表操作（不在输入框里时）
             if (e.key === '?' || e.key === 'F1') { e.preventDefault(); this.toggleHelp(true); return; }
-            if (this.state.view === 'records') return;
+            if (this.state.view === 'records') {
+                if (e.key === 'ArrowLeft') { e.preventDefault(); this.records.shift(-1); }
+                if (e.key === 'ArrowRight') { e.preventDefault(); this.records.shift(1); }
+                return;
+            }
             const sel = this.taskList.selectedId;
             if (e.key === 'ArrowDown' || k === 'j') { e.preventDefault(); this.taskList.move(1); return; }
             if (e.key === 'ArrowUp' || k === 'k') { e.preventDefault(); this.taskList.move(-1); return; }

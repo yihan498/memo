@@ -6,6 +6,7 @@
 #     seed.json  初始数据（electron-store 的 config.json）。支持占位符：
 #                  __TODAY__          今天 YYYY-MM-DD
 #                  __AGO_<秒>__       <秒> 之前的 UTC ISO 时间（造「正在计时」的状态）
+#                  __DAY_<±天>__      本地日期 YYYY-MM-DD（造历史记录 dailyHistory 的键）
 #                  __LOCAL_<±分钟>__   本地 datetime-local 'YYYY-MM-DDTHH:MM'（待办的截止 / 计划时间）
 #                没写 windowBounds 时自动放到 x=700，避开你正在用的 Memo
 #     eval.js    可选：页面加载 1.5 秒后在渲染进程执行（模拟输入 / 点击）；不需要时传 -
@@ -35,6 +36,7 @@ s = s.replace('__TODAY__', dt.date.today().isoformat())
 now = dt.datetime.now(dt.timezone.utc)
 s = re.sub(r'__AGO_(\d+)__', lambda m: (now - dt.timedelta(seconds=int(m.group(1)))).strftime('%Y-%m-%dT%H:%M:%S.000Z'), s)
 loc = dt.datetime.now()
+s = re.sub(r'__DAY_([+-]?\d+)__', lambda m: (loc + dt.timedelta(days=int(m.group(1)))).strftime('%Y-%m-%d'), s)
 s = re.sub(r'__LOCAL_([+-]?\d+)__', lambda m: (loc + dt.timedelta(minutes=int(m.group(1)))).strftime('%Y-%m-%dT%H:%M'), s)
 cfg = json.loads(s)
 cfg.setdefault('windowBounds', {'width': 380, 'height': 620, 'x': 700, 'y': 60})
