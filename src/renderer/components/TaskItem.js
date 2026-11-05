@@ -36,10 +36,11 @@ export function timerHtml(task, now = Date.now()) {
         pct = Math.min(100, (el / total) * 100);
         line = `<b class="clock ${run}">${fmtClock(el)}</b><span class="target">/ ${task.targetMin} 分</span>`;
     }
+    // 各段起止时间不再逐条列出（太占地方）：只显示段数，悬停看全部；完整明细在记录页
+    const sessTag = sess.length ? `<span class="sess-n" title="${sess.join('\n')}">${sess.length} 段</span>` : '';
     return `
-        <div class="timer-line">${line}</div>
-        <div class="bar ${task.countdown ? 'cd' : ''}"><i style="width:${pct}%"></i></div>
-        ${sess.length ? `<div class="sessions">${sess.join('　')}</div>` : ''}`;
+        <div class="timer-line">${line}${sessTag}</div>
+        <div class="bar ${task.countdown ? 'cd' : ''}"><i style="width:${pct}%"></i></div>`;
 }
 
 /** ctx: { late } —— late = 已过晚间检查时间（没完成的标红） */

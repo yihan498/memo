@@ -146,7 +146,7 @@
         .bar { height: 3px; background: var(--line); border-radius: 2px; margin-top: 4px; overflow: hidden; }
         .bar i { display: block; height: 100%; background: var(--accent); border-radius: 2px; }
         .task.pass .bar i { background: var(--ok); }
-        .sessions { font-size: 10px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+        .sess-n { margin-left: auto; font-size: 10px; color: var(--muted); cursor: default; }
         .timer-btn { width: 28px; height: 28px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; background: var(--soft); color: var(--fg); margin-top: 2px; }
         .timer-btn:hover { background: var(--accent-soft); color: var(--accent); }
         .timer-btn.running { background: var(--accent); color: var(--on-accent); }
@@ -294,6 +294,21 @@
         .cal-todo.done .txt { color: var(--muted); text-decoration: line-through; }
         .cal-none { margin: 2px 0 6px; font-size: 11px; color: var(--muted); }
         .cal-add { font-size: 11px; color: var(--muted); padding: 2px 0; }
+        /* 想法页 */
+        .idea-time { flex-shrink: 0; padding-top: 2px; font-size: 10px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .task:hover .idea-time { display: none; }
+        .idea-check { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--muted); color: transparent; }
+        .idea-check svg { width: 10px; height: 10px; }
+        .idea-check:hover { border-color: var(--ok); color: var(--ok); }
+        .idea.done .idea-check { background: var(--ok); border-color: var(--ok); color: var(--bg); }
+        .idea.done .task-text { color: var(--muted); text-decoration: none; }
+        .idea.shelved .idea-check { border-style: dashed; }
+        .idea.shelved .task-text { color: var(--muted); }
+        .idea .delete-btn { display: none; }
+        .idea:hover .delete-btn, .idea .delete-btn.confirm { display: grid; opacity: 1; }
+        .idea-area { cursor: pointer; background: var(--accent-soft); color: var(--accent); font-size: 10px; }
+        .seg-n { margin-left: 3px; color: var(--accent); font-weight: 500; }
+        .idea-filter { font-size: 11px; background: var(--soft); border: none; border-radius: 5px; padding: 3px 4px; outline: none; color: var(--fg); max-width: 110px; }
         .rec-empty { color: var(--muted); font-size: 12px; text-align: center; margin-top: 30px; }
 
         /* 快捷键帮助 */
@@ -344,6 +359,7 @@
                 <button class="tab-btn" data-view="daily">每日常规<span class="tab-count"></span></button>
                 <button class="tab-btn" data-view="todo">零碎待办<span class="tab-count"></span></button>
                 <button class="tab-btn" data-view="records">记录</button>
+                <button class="tab-btn" data-view="ideas">想法</button>
             </nav>
 
             <div id="dailyBar" class="daily-bar no-drag hidden">
@@ -382,6 +398,20 @@
                 <div id="recBody" class="rec-body"></div>
             </div>
 
+            <div id="ideasBar" class="daily-bar no-drag hidden">
+                <div class="seg">
+                    <button class="seg-btn idea-seg" data-status="open">待处理</button>
+                    <button class="seg-btn idea-seg" data-status="done">已落实</button>
+                    <button class="seg-btn idea-seg" data-status="shelved">搁置</button>
+                </div>
+                <select id="ideaAreaFilter" class="idea-filter hidden" title="按分区筛选"></select>
+            </div>
+
+            <div id="ideasView" class="list-wrap no-drag hidden">
+                <div id="ideasList" class="list"></div>
+                <div id="ideasEmpty" class="empty hidden"></div>
+            </div>
+
             <footer id="footer" class="footer no-drag">
                 <div id="dailyInputRow" class="input-row">
                     <input id="taskInput" type="text" placeholder="添加每日常规，回车确认">
@@ -393,6 +423,11 @@
                 <div id="todoInputRow" class="input-row hidden">
                     <input id="quickInput" type="text" placeholder="一句话添加：周五前交报告 #产品 重要" title="回车后自动识别时间 / 分区 / 优先级 / 提醒，打开表单核对后再保存">
                     <button id="openFormBtn" class="add-btn" title="回车 = 识别并打开表单；输入框为空时打开空白表单（Ctrl+N）">+</button>
+                </div>
+                <div id="ideaInputRow" class="input-row hidden">
+                    <input id="ideaInput" type="text" placeholder="冒出个想法？写一句，回车就存" title="回车保存；句子里写 #产品 也能当分区；双击已存的想法可修改">
+                    <input id="ideaAreaInput" class="area-in" type="text" list="ideaAreaList" placeholder="分区" title="分区（可不填）：如 产品 / 自媒体；填一次后保留">
+                    <button id="ideaAddBtn" class="add-btn" title="保存">+</button>
                 </div>
                 <div class="footer-meta">
                     <span id="taskCount">0 项</span>
@@ -451,7 +486,8 @@
                 <h4>全局</h4>
                 <div class="help-row"><span>呼出 / 隐藏窗口（任何地方）</span><kbd>Ctrl Alt D</kbd></div>
                 <div class="help-row"><span>新建</span><kbd>Ctrl N</kbd></div>
-                <div class="help-row"><span>切换 常规 / 待办 / 记录</span><kbd>Ctrl 1 2 3</kbd></div>
+                <div class="help-row"><span>切换 常规 / 待办 / 记录 / 想法</span><kbd>Ctrl 1 2 3 4</kbd></div>
+                <div class="help-row"><span>随手记想法（任何地方）</span><kbd>Ctrl Alt I</kbd></div>
                 <div class="help-row"><span>下一页 / 上一页</span><kbd>Ctrl (Shift) Tab</kbd></div>
                 <div class="help-row"><span>切换排序 / 记录回到今天</span><kbd>Ctrl L</kbd></div>
                 <div class="help-row"><span>记录页翻月</span><kbd>← →</kbd></div>
@@ -478,6 +514,7 @@
     </div>
 
     <datalist id="areaList"></datalist>
+    <datalist id="ideaAreaList"></datalist>
     <script type="module" src="app.js"></script>
 </body>
 </html>

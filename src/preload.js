@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 系统通知
   notify: (title, body) => ipcRenderer.invoke('notify', title, body),
+  // 全局快捷键 Ctrl+Alt+I：跳到想法页
+  onQuickIdea: (cb) => ipcRenderer.on('quick-idea', () => cb()),
 
   // Platform info
   platform: process.platform

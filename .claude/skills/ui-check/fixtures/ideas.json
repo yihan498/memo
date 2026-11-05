@@ -1,0 +1,12 @@
+{
+  "view": "ideas",
+  "lastResetDate": "__TODAY__",
+  "tasks": [],
+  "ideas": [
+    { "id": "i1", "text": "Memo 可以加一个周报导出，每周日自动生成", "area": "产品", "status": "open", "createdAt": "__AGO_600__" },
+    { "id": "i2", "text": "小红书选题：研究生怎么用 AI 管理一天的时间", "area": "自媒体", "status": "open", "createdAt": "__AGO_7200__" },
+    { "id": "i3", "text": "试试把读书笔记直接转成卡片", "createdAt": "__AGO_100000__" },
+    { "id": "i4", "text": "番茄钟结束后弹一句鼓励的话", "area": "产品", "status": "done", "statusAt": "__AGO_3600__", "createdAt": "__AGO_400000__" },
+    { "id": "i5", "text": "做一个记账小程序", "status": "shelved", "statusAt": "__AGO_3600__", "createdAt": "__AGO_500000__" }
+  ]
+}

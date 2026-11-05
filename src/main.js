@@ -190,6 +190,14 @@ if (!gotTheLock) {
       else { mainWindow.show(); mainWindow.focus(); }
     });
   } catch (e) { console.warn('globalShortcut failed', e); }
+  // Ctrl+Alt+I：任何地方呼出窗口并直接进入「想法」输入框
+  try {
+    globalShortcut.register('CommandOrControl+Alt+I', () => {
+      if (!mainWindow) return;
+      mainWindow.show(); mainWindow.focus();
+      mainWindow.webContents.send('quick-idea');
+    });
+  } catch (e) { console.warn('globalShortcut failed', e); }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
