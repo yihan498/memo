@@ -26,7 +26,9 @@ export class Header {
     async toggleCompactMode() {
         this.isCompact = !this.isCompact;
         this.mainContentArea.classList.toggle('hidden', this.isCompact);
-        await window.electronAPI.setCompactMode(this.isCompact);
+        // 收起时窗口高度由 app 按「正在计时的项目数」决定（见 app.syncCompact）
+        if (this.callbacks.onCompactChange) this.callbacks.onCompactChange(this.isCompact);
+        else await window.electronAPI.setCompactMode(this.isCompact);
     }
 
     updateAlwaysOnTopButton(on) {

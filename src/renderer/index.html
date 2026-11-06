@@ -66,6 +66,17 @@
         .icon-btn.on { color: var(--accent); }
         .icon-btn.close:hover { background: var(--accent); color: var(--on-accent); }
         .icon-btn svg { width: 14px; height: 14px; }
+        /* × 和其他按钮隔开一段 + 竖线，防止点收起时误点到 */
+        .ctl-sep { width: 1px; height: 14px; background: var(--line); margin: 0 7px 0 8px; }
+
+        /* 收起后：标题栏下方显示正在计时的项目 */
+        .mini-timers { padding: 0 12px 6px 14px; flex-shrink: 0; }
+        .mini-row { display: flex; align-items: center; gap: 8px; height: 24px; font-size: 12px; }
+        .mini-row .mt-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mini-row .mt-bar { flex: 0 0 44px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+        .mini-row .mt-bar i { display: block; height: 100%; background: var(--accent); }
+        .mini-row .clock { font-size: 13px; }
+        .mini-row .clock.over { color: var(--bad); }
 
         .main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
@@ -336,6 +347,9 @@
                 <span id="brandDate" class="brand-date"></span>
             </div>
             <div class="controls no-drag">
+                <button id="compactBtn" class="icon-btn" title="收起 / 展开（Ctrl+M）">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
                 <button id="helpBtn" class="icon-btn" title="快捷键（?）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
                 </button>
@@ -345,14 +359,14 @@
                 <button id="themeBtn" class="icon-btn" title="深色 / 浅色（Ctrl+T）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
-                <button id="compactBtn" class="icon-btn" title="收起 / 展开（Ctrl+M）">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </button>
+                <span class="ctl-sep"></span>
                 <button id="closeBtn" class="icon-btn close" title="隐藏到托盘（Ctrl+W / Esc）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
         </header>
+
+        <div id="miniTimers" class="mini-timers drag hidden"></div>
 
         <div id="mainContentArea" class="main">
             <nav class="tabs no-drag">

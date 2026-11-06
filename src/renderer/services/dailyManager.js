@@ -39,14 +39,11 @@ function closeSession(t, endIso) {
     return { ...t, sessions: (t.sessions || []).concat({ start: t.runningSince, end: endIso }), runningSince: null };
 }
 
-/** 开始计时；同一时间只允许一个在计时，会先停掉别的 */
+/** 开始计时；可以同时开多个（各计各的，互不影响） */
 export function startTimer(state, id, now = new Date()) {
     const iso = now.toISOString();
-    const tasks = state.tasks.map(t => {
-        if (t.type !== 'daily') return t;
-        if (t.id === id) return t.runningSince ? t : { ...t, runningSince: iso };
-        return closeSession(t, iso);
-    });
+    const tasks = state.tasks.map(t =>
+        (t.type === 'daily' && t.id === id && !t.runningSince ? { ...t, runningSince: iso } : t));
     return { ...state, tasks };
 }
 

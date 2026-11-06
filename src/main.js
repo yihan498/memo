@@ -28,6 +28,7 @@ let mainWindow;
 let tray;
 let isQuitting = false;
 let savedHeight = 480;
+let isCompactMode = false;
 
 function createWindow() {
   // Get stored window bounds or use defaults
@@ -86,7 +87,7 @@ function createWindow() {
     // Save window bounds
     if (mainWindow) {
       const bounds = mainWindow.getBounds();
-      store.set('windowBounds', bounds);
+      store.set('windowBounds', isCompactMode ? { ...bounds, height: savedHeight } : bounds);
     }
 
     // 关闭 = 隐藏到托盘，保证提醒继续工作；真正退出走托盘菜单
@@ -241,14 +242,17 @@ ipcMain.handle('close-window', () => {
   mainWindow.close();
 });
 
-ipcMain.handle('set-compact-mode', (event, isCompact) => {
+// 收起：height = 标题栏 + 正在计时的行数（计时开始 / 结束时 renderer 会再调一次调整高度）
+ipcMain.handle('set-compact-mode', (event, isCompact, height = 46) => {
   if (!mainWindow) return;
   const bounds = mainWindow.getBounds();
   if (isCompact) {
-    savedHeight = bounds.height;
-    mainWindow.setMinimumSize(280, 46);
-    mainWindow.setSize(bounds.width, 46, true);
+    if (!isCompactMode) savedHeight = bounds.height; // 已收起时只改高度，不覆盖展开高度
+    isCompactMode = true;
+    mainWindow.setMinimumSize(280, height);
+    mainWindow.setSize(bounds.width, height, true);
   } else {
+    isCompactMode = false;
     mainWindow.setSize(bounds.width, savedHeight, true);
     mainWindow.setMinimumSize(280, 400);
   }

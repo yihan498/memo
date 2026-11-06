@@ -1,0 +1,11 @@
+{
+  "view": "daily",
+  "lastResetDate": "__TODAY__",
+  "tasks": [
+    { "id": "d1", "type": "daily", "text": "写产品文档", "area": "产品", "targetMin": 60, "countdown": true,
+      "sessions": [], "runningSince": null, "completed": false, "createdAt": "__AGO_90000__", "completedAt": null },
+    { "id": "d3", "type": "daily", "text": "背单词", "area": "学习", "targetMin": 30,
+      "sessions": [], "runningSince": "__AGO_600__", "completed": false, "createdAt": "__AGO_90000__", "completedAt": null },
+    { "id": "d5", "type": "daily", "text": "喝水", "completed": false, "createdAt": "__AGO_90000__", "completedAt": null }
+  ]
+}

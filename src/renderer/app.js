@@ -1,12 +1,12 @@
 import { loadTheme, saveTheme, loadAlwaysOnTop } from './services/storeService.js';
 import { createTask, toggleTask, updateTask, deleteTask } from './services/taskManager.js';
-import { dateKey, rollover, pendingCheck, pastCheckTime, recentDays, startTimer, stopTimer, applyTimers } from './services/dailyManager.js';
+import { dateKey, rollover, pendingCheck, pastCheckTime, recentDays, startTimer, stopTimer, applyTimers, elapsedMs } from './services/dailyManager.js';
 import { Header } from './components/Header.js';
 import { TaskList } from './components/TaskList.js';
 import { TaskInput } from './components/TaskInput.js';
 import { TodoForm } from './components/TodoForm.js';
 import { Records } from './components/Records.js';
-import { timerHtml } from './components/TaskItem.js';
+import { timerHtml, fmtClock } from './components/TaskItem.js';
 import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, planReminders, planKey, shortTime } from './services/todoSort.js';
 import { normArea, listAreas, groupByArea } from './services/areas.js';
 import { parseTodo } from './services/quickParse.js';
@@ -58,6 +58,7 @@ class TodoWidgetApp {
 
         this.header = new Header({
             onThemeToggle: () => this.toggleTheme(),
+            onCompactChange: (on) => this.syncCompact(on),
             getTaskCount: () => this.state.tasks.filter(t => !t.completed).length
         });
 
@@ -180,6 +181,48 @@ class TodoWidgetApp {
             const box = document.querySelector(`[data-task-id="${t.id}"] .timer`);
             if (box) box.innerHTML = timerHtml(t);
         });
+        if (this.header.isCompact) this.renderMiniTimers(running);
+    }
+
+    // --- 收起模式：标题栏下方列出正在计时的项目 ---
+
+    /** 每行：名字 · 进度条 · 已计时（正计时）或剩余（倒计时） */
+    renderMiniTimers(running) {
+        const now = Date.now();
+        const esc = s => String(s).replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`);
+        document.getElementById('miniTimers').innerHTML = running.map(t => {
+            const el = elapsedMs(t, now), total = t.targetMin * 60000;
+            let clock, pct;
+            if (t.countdown) {
+                const left = total - el;
+                pct = Math.max(0, Math.min(100, (left / total) * 100));
+                clock = left > 0 ? `<b class="clock running">${fmtClock(left)}</b>` : `<b class="clock running over">+${fmtClock(-left)}</b>`;
+            } else {
+                pct = Math.min(100, (el / total) * 100);
+                clock = `<b class="clock running">${fmtClock(el)}</b>`;
+            }
+            const tip = t.countdown ? `倒计时 · 共 ${t.targetMin} 分` : `正计时 · 目标 ${t.targetMin} 分`;
+            return `<div class="mini-row" title="${tip}"><span class="mt-name">${esc(t.text)}</span><span class="mt-bar"><i style="width:${pct}%"></i></span>${clock}</div>`;
+        }).join('');
+    }
+
+    /** 收起 / 展开，或收起状态下计时项增减时调整窗口高度 */
+    syncCompact(on = this.header.isCompact) {
+        const strip = document.getElementById('miniTimers');
+        if (!on) {
+            strip.classList.add('hidden');
+            this.compactHeight = null;
+            window.electronAPI.setCompactMode(false);
+            return;
+        }
+        const running = this.state.tasks.filter(t => t.type === 'daily' && t.runningSince && t.targetMin);
+        this.renderMiniTimers(running);
+        strip.classList.toggle('hidden', !running.length);
+        const h = 46 + (running.length ? running.length * 24 + 6 : 0);
+        if (h !== this.compactHeight) {
+            this.compactHeight = h;
+            window.electronAPI.setCompactMode(true, h);
+        }
     }
 
     // --- 视图切换 ---
@@ -335,6 +378,7 @@ class TodoWidgetApp {
     // --- Render ---
 
     updateUI() {
+        if (this.header && this.header.isCompact) this.syncCompact(true);
         const view = this.state.view;
         const isRecords = view === 'records';
         let visible = this.state.tasks.filter(t => t.type === view);

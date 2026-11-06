@@ -31,8 +31,10 @@ c = m.startTimer(c, '阅读', new Date(2026,10,4,9,0));
 c = m.stopTimer(c, '阅读', new Date(2026,10,4,9,20));
 assert.equal(m.elapsedMs(c.tasks[0]), 20 * 60000);
 c = m.startTimer(c, '阅读', new Date(2026,10,4,14,0));
-// 开始另一个会停掉正在计时的
+// 可以同时计时：开始另一个不会停掉正在计时的
 c = m.startTimer(c, '跑步', new Date(2026,10,4,14,5));
+assert.ok(c.tasks[0].runningSince && c.tasks[1].runningSince);
+c = m.stopTimer(c, '阅读', new Date(2026,10,4,14,5));
 assert.equal(c.tasks[0].runningSince, null);
 assert.equal(c.tasks[0].sessions.length, 2);
 assert.equal(m.elapsedMs(c.tasks[0]), 25 * 60000);
