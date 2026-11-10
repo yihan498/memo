@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage, Notification, globalShortcut } = require('electron');
+const { app, BrowserWindow, Menu, Tray, ipcMain, screen, nativeImage, Notification, globalShortcut, clipboard } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -29,6 +29,34 @@ let tray;
 let isQuitting = false;
 let savedHeight = 480;
 let isCompactMode = false;
+
+// 收集模式（Ctrl+Alt+Shift+V 开 / 关）：开着时每复制一段新文字，自动收进想法
+// 电脑微信多选消息后不能复制，只能一条条右键复制，这样就不用每条再按一次快捷键
+const COLLECT_POLL_MS = 400;
+const COLLECT_IDLE_MS = 10 * 60 * 1000; // 10 分钟没有新复制就自动结束，免得忘了关
+let collect = null; // { timer, last, lastAt }
+
+function stopCollect() {
+  if (!collect) return;
+  clearInterval(collect.timer);
+  collect = null;
+  if (tray) tray.setToolTip('Memo（Ctrl+Alt+D 呼出）');
+  if (mainWindow) mainWindow.webContents.send('collect', false);
+}
+
+function startCollect() {
+  collect = { last: clipboard.readText(), lastAt: Date.now() }; // 开始前剪贴板里的旧内容不收
+  collect.timer = setInterval(() => {
+    const text = clipboard.readText();
+    if (text !== collect.last) {
+      collect.last = text;
+      collect.lastAt = Date.now();
+      if (text.trim() && mainWindow) mainWindow.webContents.send('clip-idea', text, true);
+    } else if (Date.now() - collect.lastAt > COLLECT_IDLE_MS) stopCollect();
+  }, COLLECT_POLL_MS);
+  if (tray) tray.setToolTip('Memo · 收集中（Ctrl+Alt+Shift+V 结束）');
+  if (mainWindow) mainWindow.webContents.send('collect', true);
+}
 
 function createWindow() {
   // Get stored window bounds or use defaults
@@ -199,6 +227,21 @@ if (!gotTheLock) {
       mainWindow.webContents.send('quick-idea');
     });
   } catch (e) { console.warn('globalShortcut failed', e); }
+  // Ctrl+Alt+V：把剪贴板文字收进「想法」，不弹出窗口（手机发到微信文件传输助手 → 电脑微信右键复制 → 按它）
+  try {
+    const ok = globalShortcut.register('CommandOrControl+Alt+V', () => {
+      if (!mainWindow) return;
+      mainWindow.webContents.send('clip-idea', clipboard.readText());
+    });
+    const ok2 = globalShortcut.register('CommandOrControl+Alt+Shift+V', () => (collect ? stopCollect() : startCollect()));
+    if (!ok2 && Notification.isSupported()) {
+      new Notification({ title: 'Ctrl+Alt+Shift+V 被别的软件占用', body: '收集模式用不了，告诉 Claude 换个快捷键' }).show();
+    }
+    // 被别的软件占用时 register 返回 false（不抛错），要明说，否则按了没反应也不知道为什么
+    if (!ok && Notification.isSupported()) {
+      new Notification({ title: 'Ctrl+Alt+V 被别的软件占用', body: '剪贴板收进想法用不了，告诉 Claude 换个快捷键' }).show();
+    }
+  } catch (e) { console.warn('globalShortcut failed', e); }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -273,7 +316,7 @@ ipcMain.handle('notify', (event, title, body) => {
 });
 
 app.on('before-quit', () => { isQuitting = true; });
-app.on('will-quit', () => globalShortcut.unregisterAll());
+app.on('will-quit', () => { stopCollect(); globalShortcut.unregisterAll(); });
 
 ipcMain.handle('get-screen-size', () => {
   const primaryDisplay = screen.getPrimaryDisplay();

@@ -1,0 +1,3 @@
+{"view":"daily","lastResetDate":"__TODAY__","tasks":[
+{"id":"a","type":"daily","text":"写作 A","targetMin":60,"sessions":[],"runningSince":"__AGO_600__","completed":false},
+{"id":"b","type":"daily","text":"阅读 B","targetMin":60,"sessions":[],"runningSince":"__AGO_120__","completed":false}]}

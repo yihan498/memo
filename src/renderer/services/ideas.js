@@ -1,5 +1,5 @@
 // 想法：随手记下的小念头。和任务分开存（store key: ideas），不参与提醒 / 记录页统计
-// 结构：{ id, text, createdAt (ISO), area: string|null, status: 'open'|'done'|'shelved', statusAt?, updatedAt? }
+// 结构：{ id, text, createdAt (ISO), area: string|null, status: 'open'|'done'|'shelved', statusAt?, updatedAt?, source?: 'clipboard' }
 //   open 待处理（默认）/ done 已落实 / shelved 搁置（暂时不做，但不删）
 import { normArea } from './areas.js';
 
@@ -26,6 +26,18 @@ export function addIdea(ideas, text, now = new Date(), area = null) {
     if (!p.text) return ideas;
     const id = `idea-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`;
     return [{ id, text: p.text, area: normArea(p.area || area), status: 'open', createdAt: now.toISOString() }, ...ideas];
+}
+
+/**
+ * 剪贴板收集（Ctrl+Alt+V，手机发到微信文件传输助手 → 电脑微信复制 → 收进来）
+ * 原样收下：不解析「#分区」（微信文字里的 #话题 不该变成分区）；和已有想法同文时不重复收
+ * 返回 { ideas, added }
+ */
+export function captureIdea(ideas, text, now = new Date()) {
+    const t = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!t || ideas.some(i => i.text === t)) return { ideas, added: false };
+    const id = `idea-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`;
+    return { ideas: [{ id, text: t, area: null, status: 'open', source: 'clipboard', createdAt: now.toISOString() }, ...ideas], added: true };
 }
 
 // 改正文和分区；正文改成空 = 不改（删除走 ✕）

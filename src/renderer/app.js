@@ -11,7 +11,7 @@ import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminde
 import { normArea, listAreas, groupByArea } from './services/areas.js';
 import { parseTodo } from './services/quickParse.js';
 import { Ideas } from './components/Ideas.js';
-import { addIdea, editIdea, removeIdea, setIdeaStatus } from './services/ideas.js';
+import { addIdea, captureIdea, editIdea, removeIdea, setIdeaStatus } from './services/ideas.js';
 
 // 需要持久化的状态字段 → electron-store 的 key
 const PERSIST_KEYS = ['tasks', 'view', 'lastResetDate', 'dailyHistory', 'checkTime', 'lastNotifiedDate', 'todoSort', 'todoLog', 'ideas'];
@@ -107,6 +107,8 @@ class TodoWidgetApp {
         });
         // 全局快捷键 Ctrl+Alt+I：主进程呼出窗口后通知这里跳到想法页
         if (window.electronAPI.onQuickIdea) window.electronAPI.onQuickIdea(() => this.setView('ideas'));
+        if (window.electronAPI.onClipIdea) window.electronAPI.onClipIdea((text, quiet) => this.handleClipIdea(text, quiet));
+        if (window.electronAPI.onCollect) window.electronAPI.onCollect((on) => this.handleCollect(on));
 
         this.setupTabs();
         this.setupDailyBar();
@@ -296,12 +298,49 @@ class TodoWidgetApp {
         this.updateUI();
     }
 
+    /** 收集模式开 / 关：开时提示用法，关时报总数 */
+    handleCollect(on) {
+        if (on) {
+            this.collected = 0;
+            window.electronAPI.notify('收集模式已开启', '在微信里挨个右键「复制」，每条都会收进想法。再按 Ctrl+Alt+Shift+V 结束');
+        } else {
+            window.electronAPI.notify('收集结束', `这次收进想法 ${this.collected || 0} 条`);
+        }
+    }
+
+    /** Ctrl+Alt+V：剪贴板 → 想法（不切页面，用通知告诉结果）；quiet = 收集模式里自动收，不逐条弹通知 */
+    handleClipIdea(text, quiet = false) {
+        const { ideas, added } = captureIdea(this.state.ideas, text);
+        if (quiet) {
+            if (!added) return;
+            this.collected = (this.collected || 0) + 1;
+            this.state.ideas = ideas;
+            store.set('ideas', ideas);
+            this.updateUI();
+            return;
+        }
+        const t = String(text || '').replace(/\s+/g, ' ').trim();
+        if (!t) { window.electronAPI.notify('剪贴板里没有文字', '先在微信里右键「复制」，再按 Ctrl+Alt+V'); return; }
+        if (!added) { window.electronAPI.notify('这条已经收过了', t.slice(0, 40)); return; }
+        this.state.ideas = ideas;
+        store.set('ideas', ideas);
+        this.updateUI();
+        window.electronAPI.notify('已收进想法', t.slice(0, 40));
+    }
+
     handleTimer(id) {
         const task = this.state.tasks.find(t => t.id === id);
         if (!task || !task.targetMin) return;
-        this.state = task.runningSince ? stopTimer(this.state, id) : startTimer(this.state, id);
+        const stopping = !!task.runningSince;
+        this.state = stopping ? stopTimer(this.state, id) : startTimer(this.state, id);
         this.persist();
         this.updateUI();
+        // 停掉一个后，选中行跳到最近开始、仍在计时的那一项：连按 S 依次全部停掉，不会把刚停的重新打开
+        if (stopping) {
+            const next = this.state.tasks.filter(t => t.runningSince)
+                .sort((a, b) => b.runningSince.localeCompare(a.runningSince))[0];
+            if (next && this.taskList.ids.includes(next.id)) this.taskList.select(next.id);
+        }
     }
 
     handleDeleteTask(id) {

@@ -55,3 +55,18 @@ assert.deepEqual(g.map(x => x.label), ['今天', '昨天', '10/26 周一', '2025
 assert.deepEqual(g[0].items.map(i => i.text), ['第二个', '做个番茄钟']);
 
 console.log('ideas tests passed');
+
+// 剪贴板收集（Ctrl+Alt+V）：原样收下，不把「#话题」当分区；同样内容不重复收
+{
+    const { captureIdea } = await import('../src/renderer/services/ideas.js');
+    let r = captureIdea([], '  好文章 #AI\n https://example.com/a#b  ', new Date(2026, 10, 10, 9));
+    assert.equal(r.added, true);
+    assert.equal(r.ideas[0].text, '好文章 #AI https://example.com/a#b');
+    assert.equal(r.ideas[0].area, null);
+    assert.equal(r.ideas[0].source, 'clipboard');
+    const again = captureIdea(r.ideas, '好文章 #AI https://example.com/a#b');
+    assert.equal(again.added, false);
+    assert.equal(again.ideas.length, 1);
+    assert.equal(captureIdea(r.ideas, '   ').added, false);
+    console.log('captureIdea ok');
+}

@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   notify: (title, body) => ipcRenderer.invoke('notify', title, body),
   // 全局快捷键 Ctrl+Alt+I：跳到想法页
   onQuickIdea: (cb) => ipcRenderer.on('quick-idea', () => cb()),
+  // 全局快捷键 Ctrl+Alt+V：剪贴板文字收进想法
+  onClipIdea: (cb) => ipcRenderer.on('clip-idea', (e, text, quiet) => cb(text, quiet)),
+  // 收集模式开 / 关（Ctrl+Alt+Shift+V）
+  onCollect: (cb) => ipcRenderer.on('collect', (e, on) => cb(on)),
 
   // Platform info
   platform: process.platform
