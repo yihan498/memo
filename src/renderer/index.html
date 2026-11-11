@@ -50,7 +50,7 @@
         .no-drag { -webkit-app-region: no-drag; }
 
         #app {
-            position: relative; height: 100vh; display: flex; flex-direction: column;
+            position: relative; height: calc(100vh - var(--perch)); display: flex; flex-direction: column;
             background: var(--bg); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
         }
 
@@ -69,18 +69,21 @@
         /* × 和其他按钮隔开一段 + 竖线，防止点收起时误点到 */
         .ctl-sep { width: 1px; height: 14px; background: var(--line); margin: 0 7px 0 8px; }
 
-        /* 右上角的桌面宠物：配色只取 Memo 的黑白灰 + 橙，深色主题下跟着换 */
+        /* 窗口右上沿的桌面宠物：配色只取 Memo 的黑白灰 + 橙，深色主题下跟着换 */
         :root {
             --pet-line: #111111; --pet-screen: #111111; --pet-screen-line: #3A3A3A;
             --pet-body: #EDEDED; --pet-shade: #CFCFCF; --pet-hi: #FFFFFF;
             --pet-eye: #FFFFFF; --pet-glow: #FFC7A0;
+            --perch: 30px;
         }
         html.dark {
             --pet-line: #050505; --pet-screen: #050505; --pet-screen-line: #2A2A2A;
             --pet-body: #8C8C8C; --pet-shade: #5E5E5E; --pet-hi: #B5B5B5;
             --pet-eye: #EEEEEE; --pet-glow: #FFC7A0;
         }
-        .pet { margin-left: auto; margin-right: 4px; width: 34px; height: 38px; flex-shrink: 0; pointer-events: none; }
+        /* 外框上方留一条透明的空间，让它趴在窗口右上沿：头探出框外，爪子扒在边框上 */
+        body { padding-top: var(--perch); }
+        .pet { position: fixed; top: 0; right: 16px; z-index: 50; width: 46px; height: 41px; pointer-events: none; }
         .pet svg { width: 100%; height: 100%; display: block; overflow: visible; }
 
         /* 收起后：标题栏下方显示正在计时的项目 */
@@ -354,42 +357,39 @@
     </style>
 </head>
 <body>
+    <div class="pet" aria-hidden="true">
+            <svg viewBox="66 44 380 342">
+                <path d="M271 155L278 111Q280 95 295 89L321 80" fill="none" stroke="var(--pet-line)" stroke-width="14" stroke-linecap="round"/>
+                <path d="M274 146L280 111Q282 97 296 91L315 84" fill="none" stroke="var(--pet-hi)" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="330" cy="77" r="22" fill="var(--pet-line)"/>
+                <circle cx="330" cy="77" r="16" fill="var(--accent)"/>
+                <path d="M320 76A11 11 0 0 1 331 67" fill="none" stroke="var(--pet-glow)" stroke-width="3.5" stroke-linecap="round"/>
+                <rect x="250" y="136" width="45" height="26" rx="11" fill="var(--pet-line)"/>
+                <g stroke="var(--pet-line)" stroke-width="8">
+                    <rect x="77" y="218" width="62" height="91" rx="27" fill="var(--pet-shade)"/>
+                    <rect x="373" y="218" width="62" height="91" rx="27" fill="var(--pet-shade)"/>
+                    <path d="M96 245V278M416 245V278" fill="none" stroke="var(--pet-hi)" stroke-width="6" stroke-linecap="round"/>
+                </g>
+                <path d="M177 151C124 156 102 187 102 233V275C102 327 131 352 178 357C225 363 287 363 334 357C381 352 410 327 410 275V233C410 187 388 156 335 151C288 146 224 146 177 151Z" fill="var(--pet-body)" stroke="var(--pet-line)" stroke-width="9" stroke-linejoin="round"/>
+                <path d="M108 274C108 321 134 347 179 352C224 358 288 358 333 352C378 347 404 321 404 274C392 313 365 330 330 336C280 344 232 344 182 336C147 330 120 313 108 274Z" fill="var(--pet-shade)"/>
+                <path d="M129 197C138 178 155 169 183 166C221 162 271 161 302 164" fill="none" stroke="var(--pet-hi)" stroke-width="5" stroke-linecap="round"/>
+                <path d="M190 183C149 186 126 206 126 244V270C126 304 148 324 185 328C225 333 287 333 327 328C364 324 386 304 386 270V244C386 206 363 186 322 183C283 180 229 180 190 183Z" fill="var(--pet-screen)"/>
+                <path d="M140 228C146 207 162 198 191 195C222 193 273 193 308 195" fill="none" stroke="var(--pet-screen-line)" stroke-width="3.5" stroke-linecap="round"/>
+                <rect x="184" y="227" width="25" height="40" rx="12.5" fill="var(--pet-eye)" transform="rotate(-7 196.5 247)"/>
+                <rect x="299" y="218" width="26" height="41" rx="13" fill="var(--pet-eye)" transform="rotate(9 312 238.5)"/>
+                <path d="M233 273C244 290 267 291 280 270" fill="none" stroke="var(--pet-eye)" stroke-width="8" stroke-linecap="round"/>
+                <path d="M166 275L180 279M335 271L348 265" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/>
+                <g fill="var(--pet-body)" stroke="var(--pet-line)" stroke-width="9">
+                    <rect x="132" y="330" width="58" height="46" rx="20"/>
+                    <rect x="322" y="330" width="58" height="46" rx="20"/>
+                </g>
+            </svg>
+        </div>
     <div id="app">
         <header class="titlebar drag">
             <div class="brand">
                 <span class="brand-name">Memo</span>
                 <span id="brandDate" class="brand-date"></span>
-            </div>
-            <div class="pet" aria-hidden="true">
-                <svg viewBox="70 52 372 450">
-                    <path d="M214 342H298V402H214Z" fill="var(--pet-line)"/>
-                    <path d="M225 369H287M225 383H287" fill="none" stroke="var(--pet-screen-line)" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M113.736 454.235C133.914 414.819 172.31 393.494 218 389H294C339.69 393.494 378.086 414.819 398.264 454.235A244 244 0 0 1 113.736 454.235Z" fill="var(--pet-line)"/>
-                    <path d="M124.218 461.352C142.848 426.404 176.216 406.287 217 401L256 431L295 401C335.784 406.287 369.152 426.404 387.782 461.352A244 244 0 0 1 124.218 461.352Z" fill="var(--pet-shade)"/>
-                    <path d="M138 462C153 439 178 425 205 419M307 419C334 425 359 439 374 462" fill="none" stroke="var(--pet-hi)" stroke-width="5" stroke-linecap="round"/>
-                    <rect x="239" y="448" width="34" height="15" rx="7.5" fill="var(--pet-line)"/>
-                    <rect x="245" y="452" width="22" height="7" rx="3.5" fill="var(--accent)"/>
-                    <path d="M271 155L278 111Q280 95 295 89L321 80" fill="none" stroke="var(--pet-line)" stroke-width="14" stroke-linecap="round"/>
-                    <path d="M274 146L280 111Q282 97 296 91L315 84" fill="none" stroke="var(--pet-hi)" stroke-width="4" stroke-linecap="round"/>
-                    <circle cx="330" cy="77" r="22" fill="var(--pet-line)"/>
-                    <circle cx="330" cy="77" r="16" fill="var(--accent)"/>
-                    <path d="M320 76A11 11 0 0 1 331 67" fill="none" stroke="var(--pet-glow)" stroke-width="3.5" stroke-linecap="round"/>
-                    <rect x="250" y="136" width="45" height="26" rx="11" fill="var(--pet-line)"/>
-                    <g stroke="var(--pet-line)" stroke-width="8">
-                        <rect x="77" y="218" width="62" height="91" rx="27" fill="var(--pet-shade)"/>
-                        <rect x="373" y="218" width="62" height="91" rx="27" fill="var(--pet-shade)"/>
-                        <path d="M96 245V278M416 245V278" fill="none" stroke="var(--pet-hi)" stroke-width="6" stroke-linecap="round"/>
-                    </g>
-                    <path d="M177 151C124 156 102 187 102 233V275C102 327 131 352 178 357C225 363 287 363 334 357C381 352 410 327 410 275V233C410 187 388 156 335 151C288 146 224 146 177 151Z" fill="var(--pet-body)" stroke="var(--pet-line)" stroke-width="9" stroke-linejoin="round"/>
-                    <path d="M108 274C108 321 134 347 179 352C224 358 288 358 333 352C378 347 404 321 404 274C392 313 365 330 330 336C280 344 232 344 182 336C147 330 120 313 108 274Z" fill="var(--pet-shade)"/>
-                    <path d="M129 197C138 178 155 169 183 166C221 162 271 161 302 164" fill="none" stroke="var(--pet-hi)" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M190 183C149 186 126 206 126 244V270C126 304 148 324 185 328C225 333 287 333 327 328C364 324 386 304 386 270V244C386 206 363 186 322 183C283 180 229 180 190 183Z" fill="var(--pet-screen)"/>
-                    <path d="M140 228C146 207 162 198 191 195C222 193 273 193 308 195" fill="none" stroke="var(--pet-screen-line)" stroke-width="3.5" stroke-linecap="round"/>
-                    <rect x="184" y="227" width="25" height="40" rx="12.5" fill="var(--pet-eye)" transform="rotate(-7 196.5 247)"/>
-                    <rect x="299" y="218" width="26" height="41" rx="13" fill="var(--pet-eye)" transform="rotate(9 312 238.5)"/>
-                    <path d="M233 273C244 290 267 291 280 270" fill="none" stroke="var(--pet-eye)" stroke-width="8" stroke-linecap="round"/>
-                    <path d="M166 275L180 279M335 271L348 265" fill="none" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/>
-                </svg>
             </div>
             <div class="controls no-drag">
                 <button id="compactBtn" class="icon-btn" title="收起 / 展开（Ctrl+M）">

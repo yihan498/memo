@@ -221,7 +221,8 @@ class TodoWidgetApp {
         const running = this.state.tasks.filter(t => t.type === 'daily' && t.runningSince && t.targetMin);
         this.renderMiniTimers(running);
         strip.classList.toggle('hidden', !running.length);
-        const h = 46 + (running.length ? running.length * 24 + 6 : 0);
+        // 30 = 外框上方给桌面宠物留的透明空间（index.html 的 --perch）
+        const h = 30 + 46 + (running.length ? running.length * 24 + 6 : 0);
         if (h !== this.compactHeight) {
             this.compactHeight = h;
             window.electronAPI.setCompactMode(true, h);
