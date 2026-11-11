@@ -8,7 +8,7 @@ app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // Windows 通知需要 AppUserModelId
-app.setAppUserModelId('Memo');
+app.setAppUserModelId('com.tianyihan.memo'); // 必须和 package.json 的 appId 一致，否则 Windows 安装版弹不出通知
 
 // 开发调试：TODO_DATA_DIR 指定独立数据目录，避免污染真实数据
 // 数据目录固定为 %APPDATA%/desktop-todo，改名 / 打包都不会丢数据
@@ -337,8 +337,8 @@ ipcMain.handle('set-compact-mode', (event, isCompact, height = 46) => {
 ipcMain.handle('notify', (event, title, body) => {
   if (!Notification.isSupported()) return false;
   const n = new Notification({
-    title: keyLabel(title),
-    body: keyLabel(body),
+    title, // 快捷键文字由 renderer 在固定文案上换好，这里不碰用户内容（待办名、剪贴板文字）
+    body,
     icon: path.join(ASSETS, 'icon-png.png')
   });
   n.on('click', () => {

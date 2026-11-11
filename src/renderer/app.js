@@ -7,7 +7,7 @@ import { TaskInput } from './components/TaskInput.js';
 import { TodoForm } from './components/TodoForm.js';
 import { Records } from './components/Records.js';
 import { timerHtml, fmtClock } from './components/TaskItem.js';
-import { localizeKeys } from './utils/helpers.js';
+import { localizeKeys, keyLabel } from './utils/helpers.js';
 import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, planReminders, planKey, shortTime } from './services/todoSort.js';
 import { normArea, listAreas, groupByArea } from './services/areas.js';
 import { parseTodo } from './services/quickParse.js';
@@ -303,7 +303,7 @@ class TodoWidgetApp {
     handleCollect(on) {
         if (on) {
             this.collected = 0;
-            window.electronAPI.notify('收集模式已开启', '在微信里挨个右键「复制」，每条都会收进想法。再按 Ctrl+Alt+Shift+V 结束');
+            window.electronAPI.notify('收集模式已开启', keyLabel('在微信里挨个右键「复制」，每条都会收进想法。再按 Ctrl+Alt+Shift+V 结束'));
         } else {
             window.electronAPI.notify('收集结束', `这次收进想法 ${this.collected || 0} 条`);
         }
@@ -321,7 +321,7 @@ class TodoWidgetApp {
             return;
         }
         const t = String(text || '').replace(/\s+/g, ' ').trim();
-        if (!t) { window.electronAPI.notify('剪贴板里没有文字', '先在微信里右键「复制」，再按 Ctrl+Alt+V'); return; }
+        if (!t) { window.electronAPI.notify('剪贴板里没有文字', keyLabel('先在微信里右键「复制」，再按 Ctrl+Alt+V')); return; }
         if (!added) { window.electronAPI.notify('这条已经收过了', t.slice(0, 40)); return; }
         this.state.ideas = ideas;
         store.set('ideas', ideas);

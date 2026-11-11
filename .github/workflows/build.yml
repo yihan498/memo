@@ -30,6 +30,17 @@ jobs:
       - name: Build Windows installer
         run: npm run build:win -- --publish never
 
+      # 把打好的 Memo 真的打开跑几个场景；托盘、窗口、全局快捷键有一项没起来就让 CI 失败，不发布
+      - name: Smoke test on Windows
+        shell: bash
+        run: .github/scripts/smoke.sh "dist/win-unpacked/Memo.exe" smoke x64
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: win-smoke
+          path: smoke
+
       - uses: actions/upload-artifact@v4
         with:
           name: memo-win
@@ -61,8 +72,21 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       # 我们没有 Mac：在这台打包机上把 App 真的打开，跑几个场景并截图，结果作为 mac-smoke 下载
-      - name: Smoke test on macOS
-        run: .github/scripts/smoke.sh "dist/mac-arm64/Memo.app/Contents/MacOS/Memo" smoke
+      # 失败（没写出 status.json、托盘 / 窗口 / 快捷键没起来、架构不对）就让 CI 失败，不发布
+      - name: Smoke test on macOS (arm64)
+        run: .github/scripts/smoke.sh "dist/mac-arm64/Memo.app/Contents/MacOS/Memo" smoke/arm64 arm64
+
+      # 打包机是 Apple 芯片，x64 包靠 Rosetta 转译运行，相当于在 Intel Mac 上打开
+      - name: Smoke test on macOS (x64 via Rosetta)
+        run: |
+          /usr/bin/pgrep -q oahd || softwareupdate --install-rosetta --agree-to-license
+          .github/scripts/smoke.sh "dist/mac/Memo.app/Contents/MacOS/Memo" smoke/x64 x64
+
+      # 免费临时签名也要能通过结构校验，否则 Mac 会提示「已损坏」
+      - name: Verify code signature
+        run: |
+          codesign --verify --deep --strict --verbose=2 dist/mac-arm64/Memo.app
+          codesign --verify --deep --strict --verbose=2 dist/mac/Memo.app
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -1,7 +1,7 @@
 // 检查更新：每次启动时查一次 GitHub Releases，之后每 12 小时再查一次（Memo 常驻托盘，很少真正重启）。
-// 只读取版本号和下载安装包，不上传任何数据。
+// 只读取版本号、下载安装包（Windows 约 70MB），不上传任何数据。
 //
-// - Windows：后台自动下载新版本，下好后弹通知；点通知立即重启更新，不点就在下次退出时自动安装。
+// - Windows：后台自动下载新版本，下好后弹通知；点通知立即重启更新，不点就在下次重启 Memo 时自动安装。
 // - Mac：Mac 的自动更新要求苹果开发者签名，我们只有免费的临时签名，所以只提醒有新版本，点通知打开下载页。
 // - 只在打包安装的版本里运行（开发运行 / 自检模式不检查）。
 const { app, Notification, shell } = require('electron');
@@ -37,7 +37,7 @@ function setupWindows() {
   autoUpdater.on('update-downloaded', (info) => {
     if (announced === info.version) return;
     announced = info.version;
-    notify(`Memo ${info.version} 已下载好`, '点这里立即重启更新；不点的话，下次退出 Memo 时自动安装', () => {
+    notify(`Memo ${info.version} 已下载好`, '点这里立即重启更新；不点的话，下次重启 Memo 时自动安装', () => {
       autoUpdater.quitAndInstall(); // 会先触发 before-quit，main.js 据此放行关窗
     });
   });
