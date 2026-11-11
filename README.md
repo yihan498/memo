@@ -3,7 +3,7 @@
 **是什么**：Windows 桌面置顶小窗，记两类事——每日常规（一天内完成即可，可计时）+ 零碎待办，并留下完成记录。
 **为什么做**：提醒自己完成每日动作，零碎事项不丢。
 **名字**：项目统一叫 Memo / `memo`；本地数据目录仍是 `%APPDATA%/desktop-todo`（为了不丢数据，故意不改）。
-**当前状态**：v1.6.1 可用。Windows 10 / 11 正式支持；Mac 是测试版（只在 GitHub 的 Mac 打包机上自动检查过，还没在真机上用过）。基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
+**当前状态**：v1.6.2 可用。Windows 10 / 11 正式支持；Mac 是测试版（每次发布都会在 GitHub 的 Mac 打包机上打开 Apple 芯片和 Intel 两个包自检，还没在真机上用过）。基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
 
 ## 下载安装
 打开 [Releases](https://github.com/yihan498/memo/releases/latest)，按电脑下载：
@@ -61,7 +61,7 @@ npm start          :: 开发运行
 npm test           :: 跑逻辑测试
 npm run build:win  :: 打包安装程序到 dist/
 ```
-发布新版本：改 `package.json` 的 version → 提交 → 推送同名标签（如 `git tag v1.6.1 && git push origin v1.6.1`），GitHub Actions 自动打包 Windows 安装程序和 Mac dmg 并发布到 Releases，已安装的 Memo 会自动发现（`src/updater.js`）。在 Actions 页面手动运行则只打包和自检：Mac 包会在 macOS 打包机上真的打开、截图，结果在 `mac-smoke` 里下载（`.github/scripts/smoke.sh`）。
+发布新版本：改 `package.json` 的 version → 提交 → 推送同名标签（如 `git tag v1.6.2 && git push origin v1.6.2`），GitHub Actions 自动打包 Windows 安装程序和 Mac dmg 并发布到 Releases，已安装的 Memo 会自动发现（`src/updater.js`）。发布前会先自检：Windows 包和两个 Mac 包都会在打包机上真的打开、跑几个场景、截图，托盘、窗口、全局快捷键有一项没起来就不发布，结果在 `win-smoke` / `mac-smoke` 里下载（`.github/scripts/smoke.sh`）。在 Actions 页面手动运行则只打包和自检，不发布。
 
 ## 代码地图
 - `src/renderer/services/dailyManager.js` — 计时 / 跨天重置 / 历史 / 检查提醒，纯函数，有测试
