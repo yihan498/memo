@@ -343,6 +343,13 @@ class TodoWidgetApp {
         }
     }
 
+    /** 停掉最近开始、仍在计时的那一项（收起状态下按 S 用） */
+    stopLatestTimer() {
+        const latest = this.state.tasks.filter(t => t.runningSince)
+            .sort((a, b) => b.runningSince.localeCompare(a.runningSince))[0];
+        if (latest) this.handleTimer(latest.id);
+    }
+
     handleDeleteTask(id) {
         const remove = () => {
             this.state = deleteTask(this.state, id);
@@ -539,6 +546,9 @@ class TodoWidgetApp {
             if (mod && k === 'l' && this.state.view === 'todo') { e.preventDefault(); this.setSort(this.state.todoSort === 'time' ? 'priority' : 'time'); return; }
             if (mod && k === 'l' && this.state.view === 'records') { e.preventDefault(); this.records.cyclePreset(); return; }
             if (mod && e.shiftKey && k === 'c') { e.preventDefault(); document.getElementById('clearCompletedBtn').click(); return; }
+
+            // 收起状态下列表看不见：S 直接停掉最近开始的计时（连按依次全停），不管停在哪一页、焦点在哪
+            if (this.header.isCompact && !mod && !e.altKey && k === 's') { e.preventDefault(); this.stopLatestTimer(); return; }
 
             if (e.key === 'Escape') {
                 if (typing && document.activeElement.value) { document.activeElement.value = ''; return; }
