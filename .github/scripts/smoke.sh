@@ -8,6 +8,8 @@ BIN="$1"; OUT="$2"; ARCH="${3:-}"
 FIX=.claude/skills/ui-check/fixtures
 mkdir -p "$OUT"
 FAILED=0
+export PYTHONIOENCODING=utf-8 # Windows 打包机默认 cp1252，打印中文会报错
+WAIT="${SMOKE_WAIT:-40}"      # 每个场景最多等几秒
 
 seed() { # seed.json → 填好占位符的 config.json
   python3 - "$1" "$2" <<'PY'
@@ -35,7 +37,7 @@ run() { # 名字 seed eval(或 -) 截图秒数
   TODO_DATA_DIR="$data" TODO_DEBUG_EVAL="$ev" TODO_DEBUG_OUT="$OUT/$name" TODO_DEBUG_SHOTS="$4" "$BIN" &
   local pid=$!
   sleep 3; command -v screencapture >/dev/null && screencapture -x "$OUT/$name-screen.png" 2>/dev/null
-  for _ in $(seq 1 40); do kill -0 $pid 2>/dev/null || break; sleep 1; done
+  for _ in $(seq 1 "$WAIT"); do kill -0 $pid 2>/dev/null || break; sleep 1; done
   kill $pid 2>/dev/null
   local st="$OUT/$name/status.json"
   if [ ! -f "$st" ]; then echo "!! $name 没有写出 status.json（App 没起来或崩了）"; FAILED=1; return; fi
@@ -49,6 +51,13 @@ if len(sys.argv) > 2 and sys.argv[2] and s.get('arch') != sys.argv[2]: bad.appen
 if bad: print('!! 不通过：', ', '.join(bad)); sys.exit(1)
 PY2
 }
+
+# x64 包经 Rosetta 第一次打开要先转译，四十多秒，先空跑一次热身，不计结果
+if [ -n "${SMOKE_WARMUP:-}" ]; then
+  echo "== 热身"; d="$(mktemp -d)"; seed "$FIX/two-timers.json" "$d/config.json"
+  TODO_DATA_DIR="$d" TODO_DEBUG_OUT="$OUT/warmup" TODO_DEBUG_SHOTS=4 "$BIN" & p=$!
+  for _ in $(seq 1 150); do kill -0 $p 2>/dev/null || break; sleep 1; done; kill $p 2>/dev/null
+fi
 
 run daily   two-timers.json     -                      4
 run compact compact-timers.json compact-timers.eval.js 4,8
