@@ -8,8 +8,11 @@ app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // Windows 通知需要 AppUserModelId
-// 只给 CI 自检用：Windows 打包机没有显卡，GPU 进程会崩溃导致窗口出不来
-if (process.env.TODO_DATA_DIR && process.env.TODO_DEBUG_NO_GPU) app.disableHardwareAcceleration();
+// 只给 CI 自检用：GitHub 的 Windows Server 打包机上 GPU 进程的沙箱会崩溃（0xC0000005），窗口出不来
+if (process.env.TODO_DATA_DIR && process.env.TODO_DEBUG_NO_GPU) {
+  app.commandLine.appendSwitch('disable-gpu-sandbox');
+  app.commandLine.appendSwitch('no-sandbox');
+}
 app.setAppUserModelId('com.tianyihan.memo'); // 必须和 package.json 的 appId 一致，否则 Windows 安装版弹不出通知
 
 // 开发调试：TODO_DATA_DIR 指定独立数据目录，避免污染真实数据

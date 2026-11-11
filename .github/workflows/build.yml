@@ -34,7 +34,7 @@ jobs:
       - name: Smoke test on Windows
         shell: bash
         env:
-          TODO_DEBUG_NO_GPU: 1 # 打包机没有显卡（只在自检模式生效）
+          TODO_DEBUG_NO_GPU: 1 # 打包机上 GPU 沙箱会崩，自检时关掉（只在自检模式生效）
         run: .github/scripts/smoke.sh "dist/win-unpacked/Memo.exe" smoke x64
 
       - uses: actions/upload-artifact@v4
