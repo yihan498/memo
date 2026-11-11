@@ -2,6 +2,7 @@ import { loadTheme, saveTheme, loadAlwaysOnTop } from './services/storeService.j
 import { createTask, toggleTask, updateTask, deleteTask } from './services/taskManager.js';
 import { dateKey, rollover, pendingCheck, pastCheckTime, recentDays, startTimer, stopTimer, applyTimers, elapsedMs } from './services/dailyManager.js';
 import { Header } from './components/Header.js';
+import { Pet } from './components/Pet.js';
 import { TaskList } from './components/TaskList.js';
 import { TaskInput } from './components/TaskInput.js';
 import { TodoForm } from './components/TodoForm.js';
@@ -57,6 +58,7 @@ class TodoWidgetApp {
         this.state.tasks.filter(t => t.type === 'todo' && t.completed && t.completedAt && !logged.has(t.id))
             .forEach(t => this.state.todoLog.push(this.logEntry(t)));
 
+        this.pet = new Pet();
         this.header = new Header({
             onThemeToggle: () => this.toggleTheme(),
             onCompactChange: (on) => this.syncCompact(on),
