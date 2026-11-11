@@ -1,6 +1,6 @@
 ﻿# Memo 界面测试：在 Windows 侧启动一个「调试实例」，按指定时间点截取窗口，再只关掉这个实例。
 # 由 ui-check.sh 调用；也可以单独运行：
-#   powershell -NoProfile -ExecutionPolicy Bypass -File capture.ps1 -Project D:\...\desktop-todo -DataDir ...\.testdata -Out ...\shots -Shots 5
+#   powershell -NoProfile -ExecutionPolicy Bypass -File capture.ps1 -Project D:\...\memo -DataDir ...\.testdata -Out ...\shots -Shots 5
 param(
     [Parameter(Mandatory)] [string] $Project,
     [Parameter(Mandatory)] [string] $DataDir,

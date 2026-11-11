@@ -1,7 +1,8 @@
-# Memo（desktop-todo）
+# Memo
 
 **是什么**：Windows 桌面置顶小窗，记两类事——每日常规（一天内完成即可，可计时）+ 零碎待办，并留下完成记录。
-**为什么做**：自用，提醒自己完成每日动作，零碎事项不丢。
+**为什么做**：提醒自己完成每日动作，零碎事项不丢。
+**名字**：项目统一叫 Memo / `memo`；本地数据目录仍是 `%APPDATA%/desktop-todo`（为了不丢数据，故意不改）。
 **当前状态**：v1.3 可用（2026-11-05 「想法」页加状态（待处理 / 已落实 / 搁置）和分区；v1.1 2026-11-04，只在托盘显示、不占任务栏；计划时间也能到点提醒；记录页改为月历；分区框内直接添加、倒计时、一句话添加待办），桌面有快捷方式 `Memo.lnk`，基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
 
 ## 功能
@@ -39,7 +40,7 @@
 
 ## 运行（在 Windows 侧，不要在 WSL 里）
 ```cmd
-cd /d D:\cc_workstation\workstation\projects\personal\desktop-todo
+cd /d D:\cc_workstation\workstation\projects\active\memo
 npm install        :: 慢的话先 set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
 npm start          :: 开发运行
 npm test           :: 跑每日逻辑测试
