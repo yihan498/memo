@@ -217,6 +217,7 @@ if (!gotTheLock) {
 
   createWindow();
   createTray();
+  require('./updater').setupUpdates(); // 启动时查一次新版本（只在安装版里），见 updater.js
 
   // 全局快捷键：任何地方按 Ctrl+Alt+D 呼出 / 隐藏（被别的软件占用时静默跳过）
   try {
