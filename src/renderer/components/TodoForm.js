@@ -52,8 +52,9 @@ export class TodoForm {
             if (e.key === 'Escape') { e.stopPropagation(); this.close(); }
             const mod = e.ctrlKey || e.metaKey;
             if (mod && (e.key === 'Enter' || e.key.toLowerCase() === 's')) { e.preventDefault(); this.save(); }
-            if (e.altKey && e.key.toLowerCase() === 'i') { e.preventDefault(); this.fImportant.click(); }
-            if (e.altKey && e.key.toLowerCase() === 'u') { e.preventDefault(); this.fUrgent.click(); }
+            // 用 e.code 而不是 e.key：Mac 上 Option+I 打出的是 ˆ，e.key 对不上
+            if (e.altKey && e.code === 'KeyI') { e.preventDefault(); this.fImportant.click(); }
+            if (e.altKey && e.code === 'KeyU') { e.preventDefault(); this.fUrgent.click(); }
         });
     }
 

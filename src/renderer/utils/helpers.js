@@ -36,3 +36,18 @@ export function generateId() {
         return v.toString(16);
     });
 }
+
+/** 快捷键文字按平台显示：Mac 上 Ctrl → ⌘（Ctrl+Tab 例外，Mac 上仍是 ⌃），Alt → ⌥。和 main.js 的 keyLabel 保持一致 */
+export function keyLabel(text, platform = (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.platform)) {
+    if (platform !== 'darwin' || !text) return text;
+    return String(text).replace(/Ctrl(?=[ +]\(?(Shift\)? )?Tab)/g, '⌃').replace(/Ctrl/g, '⌘').replace(/Alt/g, '⌥');
+}
+
+/** 启动时把页面里写死的快捷键提示（title、kbd、帮助面板）换成本平台的写法 */
+export function localizeKeys(root = document) {
+    if (!window.electronAPI || window.electronAPI.platform !== 'darwin') return;
+    root.querySelectorAll('[title]').forEach(el => { el.title = keyLabel(el.title); });
+    root.querySelectorAll('kbd, .help-row span').forEach(el => {
+        el.childNodes.forEach(n => { if (n.nodeType === 3) n.textContent = keyLabel(n.textContent); });
+    });
+}

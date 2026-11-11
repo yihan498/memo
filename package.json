@@ -11,7 +11,8 @@
     "build:electron-builder": "electron-builder",
     "build:win": "electron-builder --win",
     "dist": "npm run build",
-    "test": "node tests/daily.test.mjs && node tests/todo.test.mjs && node tests/area.test.mjs && node tests/parse.test.mjs && node tests/ideas.test.mjs"
+    "test": "node tests/daily.test.mjs && node tests/todo.test.mjs && node tests/area.test.mjs && node tests/parse.test.mjs && node tests/ideas.test.mjs",
+    "build:mac": "electron-builder --mac --arm64 --x64"
   },
   "keywords": [
     "electron",
@@ -50,6 +51,17 @@
     },
     "extraMetadata": {
       "main": "src/main.js"
+    },
+    "afterPack": "build/after-pack.js",
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon-png.png",
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "artifactName": "${productName}-${arch}.${ext}",
+      "extendInfo": {
+        "LSUIElement": true
+      }
     }
   }
 }

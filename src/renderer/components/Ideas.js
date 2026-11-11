@@ -1,6 +1,6 @@
 import { groupIdeasByDay, ideaTime, filterIdeas, countByStatus, statusOf, IDEA_STATUS } from '../services/ideas.js';
 import { listAreas, normArea } from '../services/areas.js';
-import { escapeHtml } from '../utils/helpers.js';
+import { escapeHtml, keyLabel } from '../utils/helpers.js';
 
 const CONFIRM_MS = 3000;
 const ICON = {
@@ -96,7 +96,7 @@ export class Ideas {
         const empty = document.getElementById('ideasEmpty');
         empty.classList.toggle('hidden', shown.length > 0);
         const emptyText = {
-            open: ['还没有待处理的想法', '在下方随手记一句，回车就存；任何地方按 Ctrl+Alt+I 直接来这里'],
+            open: ['还没有待处理的想法', keyLabel('在下方随手记一句，回车就存；任何地方按 Ctrl+Alt+I 直接来这里')],
             done: ['还没有落实的想法', '做成了就点想法左边的圆圈'],
             shelved: ['没有搁置的想法', '暂时不做又舍不得删的，悬停点 ‖ 搁置']
         }[this.status];

@@ -24,6 +24,11 @@ const store = new Store({
   }
 });
 
+const isMac = process.platform === 'darwin';
+/** 快捷键文字按平台显示（Mac：Ctrl → ⌘，Alt → ⌥），和 renderer 的 utils/helpers.js keyLabel 一致 */
+const keyLabel = (s) => (isMac && s ? String(s).replace(/Ctrl(?=[ +]\(?(Shift\)? )?Tab)/g, '⌃').replace(/Ctrl/g, '⌘').replace(/Alt/g, '⌥') : s);
+const ASSETS = path.join(__dirname, '..', 'assets');
+
 let mainWindow;
 let tray;
 let isQuitting = false;
@@ -40,7 +45,7 @@ function stopCollect() {
   if (!collect) return;
   clearInterval(collect.timer);
   collect = null;
-  if (tray) tray.setToolTip('Memo（Ctrl+Alt+D 呼出）');
+  if (tray) tray.setToolTip(keyLabel('Memo（Ctrl+Alt+D 呼出）'));
   if (mainWindow) mainWindow.webContents.send('collect', false);
 }
 
@@ -54,7 +59,7 @@ function startCollect() {
       if (text.trim() && mainWindow) mainWindow.webContents.send('clip-idea', text, true);
     } else if (Date.now() - collect.lastAt > COLLECT_IDLE_MS) stopCollect();
   }, COLLECT_POLL_MS);
-  if (tray) tray.setToolTip('Memo · 收集中（Ctrl+Alt+Shift+V 结束）');
+  if (tray) tray.setToolTip(keyLabel('Memo · 收集中（Ctrl+Alt+Shift+V 结束）'));
   if (mainWindow) mainWindow.webContents.send('collect', true);
 }
 
@@ -78,7 +83,7 @@ function createWindow() {
     alwaysOnTop: alwaysOnTop,
     resizable: true,
     skipTaskbar: true, // 只在托盘显示，不占任务栏（托盘图标 / Ctrl+Alt+D 呼出）
-    icon: path.join(__dirname, '..', 'assets', 'icon.ico'), // Set application icon
+    icon: path.join(ASSETS, isMac ? 'icon-png.png' : 'icon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -139,11 +144,13 @@ function createWindow() {
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, '..', 'assets', 'icon.ico');
   let trayIcon;
 
   try {
-    trayIcon = nativeImage.createFromPath(iconPath);
+    // Mac 不认 .ico，且菜单栏图标要缩到 18pt；Mac 上程序坞图标已隐藏，托盘图标出不来就只能靠快捷键找到窗口
+    trayIcon = isMac
+      ? nativeImage.createFromPath(path.join(ASSETS, 'icon-png.png')).resize({ width: 18, height: 18 })
+      : nativeImage.createFromPath(path.join(ASSETS, 'icon.ico'));
 
     if (trayIcon.isEmpty()) {
       console.log('No valid icon found for tray');
@@ -166,7 +173,7 @@ function createTray() {
       }
     ]);
 
-    tray.setToolTip('Memo（Ctrl+Alt+D 呼出）');
+    tray.setToolTip(keyLabel('Memo（Ctrl+Alt+D 呼出）'));
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {
@@ -204,7 +211,7 @@ if (!gotTheLock) {
   }
   
   // 打包安装后开机自启（开发模式下不注册，避免把 electron.exe 加进启动项）
-  if (app.isPackaged) {
+  if (app.isPackaged && !process.env.TODO_DATA_DIR) {
     app.setLoginItemSettings({ openAtLogin: true });
   }
 
@@ -235,13 +242,38 @@ if (!gotTheLock) {
     });
     const ok2 = globalShortcut.register('CommandOrControl+Alt+Shift+V', () => (collect ? stopCollect() : startCollect()));
     if (!ok2 && Notification.isSupported()) {
-      new Notification({ title: 'Ctrl+Alt+Shift+V 被别的软件占用', body: '收集模式用不了，告诉 Claude 换个快捷键' }).show();
+      new Notification({ title: keyLabel('Ctrl+Alt+Shift+V 被别的软件占用'), body: '收集模式用不了，告诉 Claude 换个快捷键' }).show();
     }
     // 被别的软件占用时 register 返回 false（不抛错），要明说，否则按了没反应也不知道为什么
     if (!ok && Notification.isSupported()) {
-      new Notification({ title: 'Ctrl+Alt+V 被别的软件占用', body: '剪贴板收进想法用不了，告诉 Claude 换个快捷键' }).show();
+      new Notification({ title: keyLabel('Ctrl+Alt+V 被别的软件占用'), body: '剪贴板收进想法用不了，告诉 Claude 换个快捷键' }).show();
     }
   } catch (e) { console.warn('globalShortcut failed', e); }
+
+  // 自检（CI 在没有真机的系统上用，见 .github/scripts/smoke.sh）：TODO_DEBUG_OUT 指向输出目录时，
+  // 按 TODO_DEBUG_SHOTS（秒，逗号分隔）截取窗口自身内容，最后写 status.json（托盘、全局快捷键是否就绪）并退出
+  if (process.env.TODO_DATA_DIR && process.env.TODO_DEBUG_OUT) {
+    const fs = require('fs');
+    const out = process.env.TODO_DEBUG_OUT;
+    fs.mkdirSync(out, { recursive: true });
+    const shots = (process.env.TODO_DEBUG_SHOTS || '5').split(',').map(Number).filter(n => n > 0);
+    shots.forEach((sec, i) => setTimeout(async () => {
+      try {
+        const img = await mainWindow.webContents.capturePage();
+        fs.writeFileSync(path.join(out, `shot${i + 1}.png`), img.toPNG());
+      } catch (e) { console.error('capture failed', e); }
+      if (i === shots.length - 1) {
+        const keys = ['CommandOrControl+Alt+D', 'CommandOrControl+Alt+I', 'CommandOrControl+Alt+V', 'CommandOrControl+Alt+Shift+V'];
+        fs.writeFileSync(path.join(out, 'status.json'), JSON.stringify({
+          platform: process.platform, arch: process.arch, electron: process.versions.electron,
+          tray: !!tray, windowVisible: !!mainWindow && mainWindow.isVisible(),
+          shortcuts: Object.fromEntries(keys.map(k => [k, globalShortcut.isRegistered(k)]))
+        }, null, 2));
+        isQuitting = true;
+        app.exit(0);
+      }
+    }, sec * 1000));
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -304,9 +336,9 @@ ipcMain.handle('set-compact-mode', (event, isCompact, height = 46) => {
 ipcMain.handle('notify', (event, title, body) => {
   if (!Notification.isSupported()) return false;
   const n = new Notification({
-    title,
-    body,
-    icon: path.join(__dirname, '..', 'assets', 'icon-png.png')
+    title: keyLabel(title),
+    body: keyLabel(body),
+    icon: path.join(ASSETS, 'icon-png.png')
   });
   n.on('click', () => {
     if (mainWindow) { mainWindow.show(); mainWindow.focus(); }

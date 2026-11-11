@@ -7,6 +7,7 @@ import { TaskInput } from './components/TaskInput.js';
 import { TodoForm } from './components/TodoForm.js';
 import { Records } from './components/Records.js';
 import { timerHtml, fmtClock } from './components/TaskItem.js';
+import { localizeKeys } from './utils/helpers.js';
 import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, planReminders, planKey, shortTime } from './services/todoSort.js';
 import { normArea, listAreas, groupByArea } from './services/areas.js';
 import { parseTodo } from './services/quickParse.js';
@@ -584,5 +585,6 @@ class TodoWidgetApp {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    localizeKeys();
     window.todoWidget = new TodoWidgetApp();
 });

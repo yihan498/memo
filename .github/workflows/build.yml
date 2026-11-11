@@ -1,6 +1,7 @@
 name: Build & Release Memo
 
-# 推送 v* 标签（如 v1.5.1）→ 在 Windows 上打包安装程序 → 发布到 GitHub Releases
+# 推送 v* 标签（如 v1.5.1）→ 打包 Windows 安装程序和 Mac 的 dmg → 发布到 GitHub Releases
+# 手动运行（Actions 页面 Run workflow）只打包和自检，不发布：用来先试 Mac 包
 on:
   push:
     tags:
@@ -34,8 +35,44 @@ jobs:
           name: memo-win
           path: dist/*.exe
 
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      # 没有苹果开发者账号：只做免费的临时签名（build/after-pack.js），不公证
+      - name: Build Mac dmg (arm64 + x64)
+        run: npm run build:mac -- --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      # 我们没有 Mac：在这台打包机上把 App 真的打开，跑几个场景并截图，结果作为 mac-smoke 下载
+      - name: Smoke test on macOS
+        run: .github/scripts/smoke.sh "dist/mac-arm64/Memo.app/Contents/MacOS/Memo" smoke
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-smoke
+          path: smoke
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: memo-mac
+          path: dist/*.dmg
+
   release:
-    needs: build
+    needs: [build, build-mac]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -44,7 +81,14 @@ jobs:
           name: memo-win
           path: artifacts
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: memo-mac
+          path: artifacts
+
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: artifacts/*.exe
+          files: |
+            artifacts/*.exe
+            artifacts/*.dmg
