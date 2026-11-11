@@ -1,6 +1,6 @@
 {
   "name": "memo",
-  "version": "2.0.0",
+  "version": "1.5.1",
   "description": "Memo — 每日常规（可计时）+ 零碎备忘 + 完成记录的桌面备忘录（基于 flost8 改造）",
   "main": "src/main.js",
   "author": "Aryan Singh",

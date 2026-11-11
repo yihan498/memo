@@ -3,7 +3,13 @@
 **是什么**：Windows 桌面置顶小窗，记两类事——每日常规（一天内完成即可，可计时）+ 零碎待办，并留下完成记录。
 **为什么做**：提醒自己完成每日动作，零碎事项不丢。
 **名字**：项目统一叫 Memo / `memo`；本地数据目录仍是 `%APPDATA%/desktop-todo`（为了不丢数据，故意不改）。
-**当前状态**：v1.3 可用（2026-11-05 「想法」页加状态（待处理 / 已落实 / 搁置）和分区；v1.1 2026-11-04，只在托盘显示、不占任务栏；计划时间也能到点提醒；记录页改为月历；分区框内直接添加、倒计时、一句话添加待办），桌面有快捷方式 `Memo.lnk`，基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
+**当前状态**：v1.5.1 可用（Windows 10 / 11）。基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
+
+## 下载安装
+1. 打开 [Releases](https://github.com/yihan498/memo/releases/latest)，下载 `Memo.exe`
+2. 双击安装。安装程序没有做数字签名，Windows 可能弹出「Windows 已保护你的电脑」：点「更多信息」→「仍要运行」
+3. 装好后 Memo 只在右下角托盘里（任务栏右下角「^」里也找一找），单击托盘图标或按 `Ctrl+Alt+D` 显示 / 隐藏；开机自动启动
+4. 数据只存在本机 `%APPDATA%\desktop-todo`，不联网；卸载后数据保留，重新安装还在
 
 ## 功能
 - **每日常规**：每天 0 点自动重置，不把没做完的带到第二天（只进记录）。完成 = 绿色「通过」；过了晚间检查时间还没完成 = 红色「未完成」。
@@ -38,15 +44,15 @@
 - 只在托盘显示，任务栏没有图标：单击托盘图标 / `Ctrl+Alt+D` 显示或隐藏。托盘图标可能在任务栏右下角「^」里，可拖到常驻区。
 - 右上角 ✕ = 隐藏到托盘（提醒继续工作）；托盘右键「退出」才真正退出。打包安装后开机自启。
 
-## 运行（在 Windows 侧，不要在 WSL 里）
+## 开发
+在 Windows 侧运行（不要在 WSL 里），需要 Node.js 20：
 ```cmd
-cd /d D:\cc_workstation\workstation\projects\active\memo
 npm install        :: 慢的话先 set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/
 npm start          :: 开发运行
-npm test           :: 跑每日逻辑测试
+npm test           :: 跑逻辑测试
 npm run build:win  :: 打包安装程序到 dist/
 ```
-桌面快捷方式 `Memo.lnk` 直接启动 `node_modules\electron\dist\electron.exe` 加载本目录（不需要命令行；重复双击只会唤出已开的窗口）。删掉 node_modules 会让它失效，重新 `npm install` 即可恢复。
+发布新版本：改 `package.json` 的 version → 提交 → 推送同名标签（如 `git tag v1.5.1 && git push origin v1.5.1`），GitHub Actions 自动打包并发布到 Releases。
 
 ## 代码地图
 - `src/renderer/services/dailyManager.js` — 计时 / 跨天重置 / 历史 / 检查提醒，纯函数，有测试
