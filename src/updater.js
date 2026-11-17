@@ -18,6 +18,21 @@ function notify(title, body, onClick) {
   n.show();
 }
 
+/**
+ * 从发布说明里取第一句话放进更新通知（docs/releases/vX.Y.Z.md 的第一行就是这一句）。
+ * Windows 拿到的是 GitHub 渲染好的 HTML，Mac 拿到的是 Markdown 原文，两种都处理。
+ */
+function noteSummary(notes, max = 60) {
+  if (Array.isArray(notes)) notes = notes.map(n => (n && n.note) || '').join('\n');
+  if (!notes) return '';
+  const text = String(notes)
+    .replace(/<\/(p|h\d|li|div)>|<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const line = text.split('\n').map(l => l.replace(/^\s*(#+|[-*])\s*/, '').replace(/[*`]/g, '').trim()).find(Boolean) || '';
+  return line.length > max ? line.slice(0, max - 1) + '…' : line;
+}
+
 /** 'v1.10.0' > 'v1.9.2' */
 function isNewer(latest, current) {
   const a = String(latest).replace(/^v/, '').split('.').map(Number);
@@ -37,7 +52,8 @@ function setupWindows() {
   autoUpdater.on('update-downloaded', (info) => {
     if (announced === info.version) return;
     announced = info.version;
-    notify(`Memo ${info.version} 已下载好`, '点这里立即重启更新；不点的话，下次重启 Memo 时自动安装', () => {
+    const what = noteSummary(info.releaseNotes);
+    notify(`Memo ${info.version} 已下载好`, `${what ? what + '\n' : ''}点这里立即重启更新；不点的话，下次重启 Memo 时自动安装`, () => {
       autoUpdater.quitAndInstall(); // 会先触发 before-quit，main.js 据此放行关窗
     });
   });
@@ -55,10 +71,11 @@ function setupMac() {
         headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Memo-update-check' }
       });
       if (!res.ok) return;
-      const { tag_name: tag } = await res.json();
+      const { tag_name: tag, body } = await res.json();
       if (!tag || tag === announced || !isNewer(tag, app.getVersion())) return;
       announced = tag;
-      notify(`Memo 有新版本 ${tag}`, '点这里打开下载页，下载新的 dmg 覆盖安装即可（数据会保留）', () => shell.openExternal(RELEASES_URL));
+      const what = noteSummary(body);
+      notify(`Memo 有新版本 ${tag}`, `${what ? what + '\n' : ''}点这里打开下载页，下载新的 dmg 覆盖安装即可（数据会保留）`, () => shell.openExternal(RELEASES_URL));
     } catch { /* 没网就安静跳过 */ }
   };
   check();
@@ -71,4 +88,4 @@ function setupUpdates() {
   else if (process.platform === 'darwin') setupMac();
 }
 
-module.exports = { setupUpdates, isNewer };
+module.exports = { setupUpdates, isNewer, noteSummary };

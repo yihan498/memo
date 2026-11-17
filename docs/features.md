@@ -53,7 +53,7 @@
 | 40 | 系统 | 系统通知，点通知唤出窗口 | 无需操作 | 主进程 `Notification`；`AppUserModelId` 和安装包 `appId` 一致，否则 Windows 安装版弹不出 | — |
 | 41 | 系统 | 全局快捷键被占用时明说 | 无需操作 | `Ctrl+Alt+V` / `Ctrl+Alt+Shift+V` 注册失败时弹通知说明 | — |
 | 42 | 系统 | 开机自启 | 安装版自动 | 安装版每次启动都调 `setLoginItemSettings({ openAtLogin: true })`；开发运行不注册 | — |
-| 43 | 系统 | 检查更新 | 启动时 + 每 12 小时 | `updater.js`：Windows 用 electron-updater 后台下载，点通知立即重启安装，不点就下次退出时装；Mac 没有开发者签名不能自动装，只通知并打开下载页 | — |
+| 43 | 系统 | 检查更新 | 启动时 + 每 12 小时 | `updater.js`：Windows 用 electron-updater 后台下载，点通知立即重启安装，不点就下次退出时装；Mac 没有开发者签名不能自动装，只通知并打开下载页；两边的通知都带发布说明的第一句（`noteSummary`，取自 `docs/releases/<版本>.md`） | `tests/updater.test.mjs` |
 | 44 | 数据 | 本地存储、卸载保留、不上传 | 无需操作 | electron-store 写 `%APPDATA%\desktop-todo\config.json`（Mac 在 `~/Library/Application Support/desktop-todo`）；联网只有查更新和下载安装包 | — |
 | 45 | 发布 | Windows 安装包 + Mac 测试版 dmg（Apple 芯片 / Intel） | Releases 下载 | 推 `v*` 标签 → GitHub Actions 打包；发布前在打包机上真的打开三个包、截图、检查托盘 / 窗口 / 全局快捷键，有一项不行就不发布（`.github/scripts/smoke.sh`） | — |
 | 46 | 开发 | 隔离调试实例 + 界面截图测试 | `.claude/skills/ui-check/` | `TODO_DATA_DIR` 指向独立数据目录且不抢焦点；`TODO_DEBUG_EVAL` 注入脚本模拟输入；19 个测试场景 | — |

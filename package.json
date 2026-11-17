@@ -1,6 +1,6 @@
 {
   "name": "memo",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "description": "Memo — 每日常规（可计时）+ 零碎备忘 + 完成记录的桌面备忘录（基于 flost8 改造）",
   "main": "src/main.js",
   "author": "Aryan Singh",
@@ -11,7 +11,7 @@
     "build:electron-builder": "electron-builder",
     "build:win": "electron-builder --win",
     "dist": "npm run build",
-    "test": "node tests/daily.test.mjs && node tests/todo.test.mjs && node tests/area.test.mjs && node tests/parse.test.mjs && node tests/ideas.test.mjs",
+    "test": "node tests/daily.test.mjs && node tests/todo.test.mjs && node tests/area.test.mjs && node tests/parse.test.mjs && node tests/ideas.test.mjs && node tests/updater.test.mjs",
     "build:mac": "electron-builder --mac --arm64 --x64"
   },
   "keywords": [

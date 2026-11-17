@@ -3,7 +3,7 @@
 **是什么**：Windows 桌面置顶小窗，记两类事——每日常规（一天内完成即可，可计时）+ 零碎待办，并留下完成记录。
 **为什么做**：提醒自己完成每日动作，零碎事项不丢。
 **名字**：项目统一叫 Memo / `memo`；本地数据目录仍是 `%APPDATA%/desktop-todo`（为了不丢数据，故意不改）。
-**当前状态**：v1.6.2 可用。Windows 10 / 11 正式支持；Mac 是测试版（每次发布都会在 GitHub 的 Mac 打包机上打开 Apple 芯片和 Intel 两个包自检，还没在真机上用过）。基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
+**当前状态**：v1.7.0 可用。Windows 10 / 11 正式支持；Mac 是测试版（每次发布都会在 GitHub 的 Mac 打包机上打开 Apple 芯片和 Intel 两个包自检，还没在真机上用过）。基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
 
 ## 下载安装
 打开 [Releases](https://github.com/yihan498/memo/releases/latest)，按电脑下载：
@@ -16,7 +16,7 @@
 - 没有苹果开发者签名，第一次打开会被拦住：先双击一次，再去「系统设置 → 隐私与安全性」，在下方点「仍要打开」
 - 装好后 Memo 在屏幕右上角的菜单栏里，不占程序坞；按 `⌘⌥D` 显示 / 隐藏。界面上的 Ctrl 都换成 ⌘、Alt 换成 ⌥（切换页面的 Ctrl+Tab 仍是 ⌃Tab）
 
-**更新**：每次打开 Memo（之后每 12 小时）会查一次有没有新版本。Windows 在后台自动下载，下好后弹通知，点通知立即重启更新，不点就在下次重启 Memo 时自动安装（Memo 常驻托盘，平时很少真正退出，建议点通知）；Mac 弹通知提醒，点开下载新的 dmg 覆盖安装。v1.6.0 之前装的版本没有这个功能，需要手动下载新版重装一次。
+**更新**：每次打开 Memo（之后每 12 小时）会查一次有没有新版本。Windows 在后台自动下载，下好后弹通知（通知里有一句这次更新了什么），点通知立即重启更新，不点就在下次重启 Memo 时自动安装（Memo 常驻托盘，平时很少真正退出，建议点通知）；Mac 弹通知提醒，点开下载新的 dmg 覆盖安装。v1.6.0 之前装的版本没有这个功能，需要手动下载新版重装一次。每个版本更新了什么，见 [Releases](https://github.com/yihan498/memo/releases) 页面（原文在 `docs/releases/`）。
 
 **数据**：只存在本机（Windows `%APPDATA%\desktop-todo`，Mac `~/Library/Application Support/desktop-todo`），卸载后保留，重新安装还在。除了访问 GitHub 检查更新（Windows 有新版本时会在后台下载约 70MB 的安装包），Memo 不联网、不上传任何数据。
 
@@ -65,7 +65,7 @@ npm start          :: 开发运行
 npm test           :: 跑逻辑测试
 npm run build:win  :: 打包安装程序到 dist/
 ```
-发布新版本：改 `package.json` 的 version → 提交 → 推送同名标签（如 `git tag v1.6.2 && git push origin v1.6.2`），GitHub Actions 自动打包 Windows 安装程序和 Mac dmg 并发布到 Releases，已安装的 Memo 会自动发现（`src/updater.js`）。发布前会先自检：Windows 包和两个 Mac 包都会在打包机上真的打开、跑几个场景、截图，托盘、窗口、全局快捷键有一项没起来就不发布，结果在 `win-smoke` / `mac-smoke` 里下载（`.github/scripts/smoke.sh`）。在 Actions 页面手动运行则只打包和自检，不发布。
+发布新版本：改 `package.json` 的 version，写好 `docs/releases/v<版本>.md`（第一行是一句话总结，会显示在用户的更新通知里；下面分「新功能 / 其他变化 / 怎么更新」，没有这个文件不会发布）→ 提交 → 推送同名标签（如 `git tag v1.7.0 && git push origin v1.7.0`），GitHub Actions 自动打包 Windows 安装程序和 Mac dmg 并发布到 Releases，已安装的 Memo 会自动发现（`src/updater.js`）。发布前会先自检：Windows 包和两个 Mac 包都会在打包机上真的打开、跑几个场景、截图，托盘、窗口、全局快捷键有一项没起来就不发布，结果在 `win-smoke` / `mac-smoke` 里下载（`.github/scripts/smoke.sh`）。在 Actions 页面手动运行则只打包和自检，不发布。
 
 ## 代码地图
 - `src/renderer/services/dailyManager.js` — 计时 / 跨天重置 / 历史 / 检查提醒，纯函数，有测试
