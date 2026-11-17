@@ -10,6 +10,8 @@ export class TaskList {
         this.confirmId = null;   // 正在等待二次确认删除的任务
         this.confirmTimer = null;
         this.addingArea = null;  // 正在哪个分区框里直接添加（框内输入行）
+        this.confirmArea = null; // 正在等待二次确认删除的分区
+        this.confirmAreaTimer = null;
         this.container.addEventListener('click', (e) => this.handleEvent(e));
         this.container.addEventListener('dblclick', (e) => this.handleEvent(e));
     }
@@ -34,8 +36,9 @@ export class TaskList {
                 box.className = 'area-box' + (done ? ' done' : '');
                 const left = tasks.filter(t => !t.completed).length;
                 box.dataset.area = area;
-                box.innerHTML = `<div class="area-head"><span class="area-name"></span><span class="area-right"><span class="area-count">${left ? `剩 ${left}` : '全部完成'}</span><button type="button" class="area-add" title="直接在这个分区里添加">+</button></span></div>`;
+                box.innerHTML = `<div class="area-head"><span class="area-name"></span><span class="area-right"><span class="area-count">${left ? `剩 ${left}` : '全部完成'}</span><button type="button" class="area-add" title="直接在这个分区里添加">+</button><button type="button" class="area-del" title="删除分区（点两次）：里面的事项保留，变成未分区">×</button></span></div>`;
                 box.querySelector('.area-name').textContent = area;
+                if (area === this.confirmArea) this.markAreaConfirm(box);
                 if (area === this.addingArea) addRowBox = box;
                 frag.appendChild(box);
                 parent = box;
@@ -139,10 +142,34 @@ export class TaskList {
         this.confirmId = null;
     }
 
+    // --- 删除分区：和删事项一样点两次；事项本身保留，只是不再属于这个分区 ---
+
+    markAreaConfirm(box) {
+        const btn = box.querySelector('.area-del');
+        btn.classList.add('confirm');
+        btn.textContent = '确认删除分区';
+    }
+
+    requestAreaDelete(area) {
+        clearTimeout(this.confirmAreaTimer);
+        if (this.confirmArea === area) {
+            this.confirmArea = null;
+            if (this.addingArea === area) this.addingArea = null;
+            this.callbacks.onAreaDelete(area);
+            return;
+        }
+        this.confirmArea = area;
+        const box = [...this.container.querySelectorAll('.area-box')].find(b => b.dataset.area === area);
+        if (box) this.markAreaConfirm(box);
+        this.confirmAreaTimer = setTimeout(() => { this.confirmArea = null; this.callbacks.onRerender(); }, CONFIRM_MS);
+    }
+
     handleEvent(e) {
         const target = e.target;
         const addBtn = e.type === 'click' && target.closest('.area-add');
         if (addBtn) { this.toggleAddRow(addBtn.closest('.area-box').dataset.area); return; }
+        const delBtn = e.type === 'click' && target.closest('.area-del');
+        if (delBtn) { this.requestAreaDelete(delBtn.closest('.area-box').dataset.area); return; }
         const taskEl = target.closest('[data-task-id]');
         if (!taskEl) return;
         const id = taskEl.getAttribute('data-task-id');

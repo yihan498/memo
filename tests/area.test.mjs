@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { normArea, listAreas, groupByArea } from '../src/renderer/services/areas.js';
+import { normArea, listAreas, groupByArea, clearArea } from '../src/renderer/services/areas.js';
 
 const mk = (text, area) => ({ id: text, text, area });
 
@@ -26,5 +26,14 @@ assert.deepEqual(groupByArea([d('1', null, true), d('2', 'x', false)]).map(s => 
 // 全都没分区 → 只有一组 null；空列表 → 没有组
 assert.deepEqual(groupByArea([mk('1')]).map(s => s.area), [null]);
 assert.deepEqual(groupByArea([]), []);
+
+// 删除分区：只去掉这个分区的标签，条目保留；可按条件只改一类；不改原数组
+const src = [{ id: '1', area: 'work', type: 'daily' }, { id: '2', area: ' work', type: 'todo' }, { id: '3', area: 'alpha', type: 'daily' }];
+const c1 = clearArea(src, 'work');
+assert.deepEqual(c1.map(t => t.area), [null, null, 'alpha']);
+assert.equal(c1.length, 3);
+assert.equal(src[0].area, 'work');
+assert.deepEqual(clearArea(src, 'work', t => t.type === 'daily').map(t => t.area), [null, ' work', 'alpha']);
+assert.deepEqual(clearArea(src, '  '), src);
 
 console.log('area tests passed');

@@ -10,7 +10,7 @@ import { Records } from './components/Records.js';
 import { timerHtml, fmtClock } from './components/TaskItem.js';
 import { localizeKeys, keyLabel } from './utils/helpers.js';
 import { sortTodos, sortTodosByTime, dayGroup, quadrantOf, QUADRANTS, dueReminders, planReminders, planKey, shortTime } from './services/todoSort.js';
-import { normArea, listAreas, groupByArea } from './services/areas.js';
+import { normArea, listAreas, groupByArea, clearArea } from './services/areas.js';
 import { parseTodo } from './services/quickParse.js';
 import { Ideas } from './components/Ideas.js';
 import { addIdea, captureIdea, editIdea, removeIdea, setIdeaStatus } from './services/ideas.js';
@@ -74,6 +74,13 @@ class TodoWidgetApp {
             onEditCancel: () => this.updateUI(),
             onAreaAdd: (area, text, min, countdown) => this.handleAddTask(text, min, area, countdown),
             onAreaQuick: (area, text) => { const p = parseTodo(text); this.todoForm.open(null, p.area ? p : { ...p, area, hits: [`分区 ${area}`, ...p.hits] }); },
+            // 删除分区：只改当前页面（每日常规 / 零碎待办）里这个分区的事项，事项保留、变成未分区
+            onAreaDelete: (area) => {
+                const view = this.state.view;
+                this.state = { ...this.state, tasks: clearArea(this.state.tasks, area, t => t.type === view) };
+                this.persist();
+                this.updateUI();
+            },
             onRerender: () => this.updateUI()
         });
 
@@ -102,6 +109,7 @@ class TodoWidgetApp {
             onEdit: (id, text, area) => saveIdeas(editIdea(this.state.ideas, id, text, new Date(), area)),
             onStatus: (id, status) => saveIdeas(setIdeaStatus(this.state.ideas, id, status)),
             onDelete: (id) => saveIdeas(removeIdea(this.state.ideas, id)),
+            onAreaDelete: (area) => saveIdeas(clearArea(this.state.ideas, area)),
             // 转成待办：用一句话解析预填表单（带上想法的分区），想法本身保留，做成了再点落实
             onToTodo: (idea) => {
                 const p = parseTodo(idea.text);

@@ -43,7 +43,24 @@ export class Ideas {
         document.getElementById('ideaAddBtn').addEventListener('click', submit);
 
         document.querySelectorAll('.idea-seg').forEach(b => b.addEventListener('click', () => this.setStatus(b.dataset.status)));
-        this.areaFilter.addEventListener('change', () => { this.area = this.areaFilter.value || null; this.render(); });
+        this.areaFilter.addEventListener('change', () => { this.area = this.areaFilter.value || null; this.confirmArea = null; this.render(); });
+        // 删除分区：筛选到某个分区时旁边出现 ×，点两次；想法保留，只是不再属于这个分区
+        this.areaDel = document.getElementById('ideaAreaDel');
+        this.confirmArea = null;
+        this.areaDel.addEventListener('click', () => {
+            const area = this.area;
+            if (!area) return;
+            clearTimeout(this.confirmAreaTimer);
+            if (this.confirmArea === area) {
+                this.confirmArea = null;
+                this.area = null;
+                this.callbacks.onAreaDelete(area);
+                return;
+            }
+            this.confirmArea = area;
+            this.render();
+            this.confirmAreaTimer = setTimeout(() => { this.confirmArea = null; this.render(); }, CONFIRM_MS);
+        });
 
         this.list.addEventListener('click', (e) => {
             const row = e.target.closest('[data-idea-id]');
@@ -87,6 +104,10 @@ export class Ideas {
         const opts = '<option value="">全部分区</option>' + areas.map(a => `<option value="${esc(a)}">${escapeHtml(a)}</option>`).join('');
         if (opts !== this.lastOpts) { this.areaFilter.innerHTML = opts; this.lastOpts = opts; }
         this.areaFilter.value = this.area || '';
+        const confirmDel = !!this.area && this.confirmArea === this.area;
+        this.areaDel.classList.toggle('hidden', !this.area);
+        this.areaDel.classList.toggle('confirm', confirmDel);
+        this.areaDel.textContent = confirmDel ? '确认删除分区' : '×';
 
         // 分区候选：想法和任务用过的分区都给
         const cand = listAreas([...ideas, ...tasks]).map(a => `<option value="${esc(a)}"></option>`).join('');

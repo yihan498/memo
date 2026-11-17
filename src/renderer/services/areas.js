@@ -31,3 +31,13 @@ export function groupByArea(tasks) {
     // 稳定排序：没做完的在前，内部保持「分区按名字、未分区在后」
     return sections.filter(s => !s.done).concat(sections.filter(s => s.done));
 }
+
+/**
+ * 删除分区：把这个分区里的条目改成未分区，条目本身保留。返回新数组，不改原数组。
+ * @param match 可选：只改满足条件的条目（如只改当前页面那一类任务），不传 = 全部
+ */
+export function clearArea(items, area, match = () => true) {
+    const a = normArea(area);
+    if (!a) return items || [];
+    return (items || []).map(t => (normArea(t.area) === a && match(t) ? { ...t, area: null } : t));
+}

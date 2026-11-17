@@ -215,6 +215,10 @@
         .area-right { display: flex; align-items: center; gap: 6px; }
         .area-add { width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center; font-size: 14px; line-height: 1; color: var(--muted); }
         .area-add:hover { color: var(--accent); background: var(--accent-soft); }
+        .area-del { width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center; font-size: 13px; line-height: 1; color: var(--muted); opacity: 0; }
+        .area-box:hover .area-del, .area-del.confirm { opacity: 1; }
+        .area-del:hover { color: var(--bad); background: var(--soft); }
+        .area-del.confirm, .area-del.confirm:hover { width: auto; padding: 0 7px; font-size: 11px; color: #fff; background: var(--bad); white-space: nowrap; }
         .area-add-row { display: flex; align-items: center; gap: 8px; padding: 4px 10px 8px; }
         .area-add-row .edit-input::placeholder { color: var(--muted); font-size: 11px; }
         .area-box .group-label { padding-top: 6px; }
@@ -341,6 +345,8 @@
         .idea:hover .delete-btn, .idea .delete-btn.confirm { display: grid; opacity: 1; }
         .idea-area { cursor: pointer; background: var(--accent-soft); color: var(--accent); font-size: 10px; }
         .seg-n { margin-left: 3px; color: var(--accent); font-weight: 500; }
+        .idea-filter-wrap { display: flex; align-items: center; gap: 4px; }
+        .idea-area-del { opacity: 1; }
         .idea-filter { font-size: 11px; background: var(--soft); border: none; border-radius: 5px; padding: 3px 4px; outline: none; color: var(--fg); max-width: 110px; }
         .rec-empty { color: var(--muted); font-size: 12px; text-align: center; margin-top: 30px; }
 
@@ -470,7 +476,10 @@
                     <button class="seg-btn idea-seg" data-status="done">已落实</button>
                     <button class="seg-btn idea-seg" data-status="shelved">搁置</button>
                 </div>
-                <select id="ideaAreaFilter" class="idea-filter hidden" title="按分区筛选"></select>
+                <span class="idea-filter-wrap">
+                    <select id="ideaAreaFilter" class="idea-filter hidden" title="按分区筛选"></select>
+                    <button id="ideaAreaDel" type="button" class="area-del idea-area-del hidden" title="删除这个分区（点两次）：里面的想法保留，变成未分区">×</button>
+                </span>
             </div>
 
             <div id="ideasView" class="list-wrap no-drag hidden">
