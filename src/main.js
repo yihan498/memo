@@ -68,6 +68,23 @@ function startCollect() {
   if (mainWindow) mainWindow.webContents.send('collect', true);
 }
 
+/**
+ * 置顶 / 取消置顶。置顶：浮在所有窗口上，Mac 上还跟着切到每个桌面、浮在全屏软件上面。
+ * 不置顶就是普通窗口：Mac 上原来不管置不置顶都设了「出现在所有桌面和全屏软件上」，
+ * 结果取消置顶后切到别的桌面或全屏软件时它还会跟过去挡在前面，所以这一项也跟着置顶走。
+ * （Windows 没有这个设置，那一句在 Windows 上不起作用。）
+ */
+function applyPin(on) {
+  if (on) {
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  } else {
+    mainWindow.setAlwaysOnTop(false);
+    // skipTransformProcessType：不然 Electron 会把 Memo 变回普通程序，Dock 栏里多出一个图标
+    mainWindow.setVisibleOnAllWorkspaces(false, { skipTransformProcessType: true });
+  }
+}
+
 function createWindow() {
   // Get stored window bounds or use defaults
   const bounds = store.get('windowBounds');
@@ -114,11 +131,7 @@ function createWindow() {
     }
   }
 
-  // Aggressively enforce always on top and workspaces
-  if (alwaysOnTop) {
-    mainWindow.setAlwaysOnTop(true, 'screen-saver');
-  }
-  mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  applyPin(alwaysOnTop);
 
   // Handle window events
   mainWindow.on('close', (event) => {
@@ -316,11 +329,7 @@ ipcMain.handle('set-store-value', (event, key, value) => {
 
 ipcMain.handle('toggle-always-on-top', () => {
   const current = mainWindow.isAlwaysOnTop();
-  if (!current) {
-    mainWindow.setAlwaysOnTop(true, 'screen-saver');
-  } else {
-    mainWindow.setAlwaysOnTop(false);
-  }
+  applyPin(!current);
   store.set('alwaysOnTop', !current);
   return !current;
 });

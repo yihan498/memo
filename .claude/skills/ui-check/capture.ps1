@@ -21,6 +21,7 @@ public static class W32 {
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
+    [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr h, int i);
 }
 "@
 [W32]::SetProcessDPIAware() | Out-Null   # 拿物理像素尺寸，和 PrintWindow 输出一致
@@ -78,7 +79,8 @@ try {
         $file = Join-Path $Out ("shot{0}.png" -f $i)
         $outBmp.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
         $g.Dispose(); $bmp.Dispose(); $outBmp.Dispose()
-        Write-Output "SHOT $i OK ${t}s $file"
+        $top = ([W32]::GetWindowLong($script:main, -20) -band 8) -ne 0   # WS_EX_TOPMOST：系统认定的「置顶」
+        Write-Output "SHOT $i OK ${t}s $file topmost=$top"
     }
     $fgAfter = [W32]::GetForegroundWindow()
     Write-Output ("FOCUS " + $(if ($fgAfter -eq $fgBefore) { 'unchanged' } else { 'CHANGED (test window may have taken keyboard focus)' }))
