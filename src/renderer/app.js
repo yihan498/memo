@@ -62,7 +62,8 @@ class TodoWidgetApp {
         this.header = new Header({
             onThemeToggle: () => this.toggleTheme(),
             onCompactChange: (on) => this.syncCompact(on),
-            getTaskCount: () => this.state.tasks.filter(t => !t.completed).length
+            getTaskCount: () => this.state.tasks.filter(t => !t.completed).length,
+            getRunning: () => this.state.tasks.filter(t => t.runningSince).map(t => t.text)
         });
 
         this.taskList = new TaskList('tasksList', {

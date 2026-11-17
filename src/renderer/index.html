@@ -48,6 +48,22 @@
         .hidden { display: none !important; }
         .drag { -webkit-app-region: drag; }
         .no-drag { -webkit-app-region: no-drag; }
+        .titlebar.self-drag { -webkit-app-region: no-drag; user-select: none; }
+
+        /* 贴边收起：窗口缩成屏幕右边缘的竖条，原来的界面整个藏起来 */
+        .dock-tab { display: none; }
+        body.docked { padding: 0 !important; }
+        body.docked #app, body.docked .pet { display: none !important; }
+        /* 宽度写死 18px（= main.js 的 DOCK_W）：Windows 不让窗口窄于 32px，页面实际可能比竖条宽，不能靠铺满窗口居中 */
+        body.docked .dock-tab { position: fixed; top: 0; bottom: 0; left: 0; width: 18px; box-sizing: border-box; display: grid; place-items: center;
+            background: var(--bg); border: 1px solid var(--line); border-right-color: transparent; border-radius: 7px 0 0 7px; color: var(--muted); cursor: pointer; touch-action: none; }
+        .dock-tab:hover, .dock-tab.dragging { color: var(--accent); background: var(--soft); }
+        .dock-tab.dragging { cursor: ns-resize; }
+        .dock-tab svg { width: 12px; height: 12px; display: block; }
+        .dock-dot { position: absolute; top: 6px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--accent); visibility: hidden; }
+        .dock-tab.timing .dock-dot { visibility: visible; animation: dock-pulse 1.4s ease-in-out infinite; }
+        @keyframes dock-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+        @media (prefers-reduced-motion: reduce) { .dock-tab.timing .dock-dot { animation: none; } }
 
         #app {
             position: relative; height: calc(100vh - var(--perch)); display: flex; flex-direction: column;
@@ -398,6 +414,7 @@
                 </g>
             </svg>
         </div>
+    <div id="dockTab" class="dock-tab no-drag"><i class="dock-dot"></i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5 9.5 12l5 5.5"/></svg></div>
     <div id="app">
         <header class="titlebar drag">
             <div class="brand">
@@ -405,7 +422,7 @@
                 <span id="brandDate" class="brand-date"></span>
             </div>
             <div class="controls no-drag">
-                <button id="compactBtn" class="icon-btn" title="收起 / 展开（Ctrl+M）">
+                <button id="compactBtn" class="icon-btn" title="收起 / 展开（Ctrl+M）· 双击 = 贴到屏幕右边（Ctrl+Alt+H）">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 </button>
                 <button id="helpBtn" class="icon-btn" title="快捷键（?）">
@@ -570,7 +587,8 @@
                 <div class="help-row"><span>记录页翻月</span><kbd>← →</kbd></div>
                 <div class="help-row"><span>置顶</span><kbd>Ctrl P</kbd></div>
                 <div class="help-row"><span>深色 / 浅色</span><kbd>Ctrl T</kbd></div>
-                <div class="help-row"><span>收起 / 展开</span><kbd>Ctrl M</kbd></div>
+                <div class="help-row"><span>收起 / 展开（也可以双击标题栏空白处）</span><kbd>Ctrl M</kbd></div>
+                <div class="help-row"><span>贴到屏幕右边 / 展开（也可以双击收起键，任何地方）</span><kbd>Ctrl Alt H</kbd></div>
                 <div class="help-row"><span>隐藏到托盘</span><kbd>Ctrl W / Esc</kbd></div>
                 <div class="help-row"><span>清除已完成待办</span><kbd>Ctrl Shift C</kbd></div>
                 <h4>列表（先按 Esc 离开输入框）</h4>

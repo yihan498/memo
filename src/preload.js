@@ -13,6 +13,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeWindow: () => ipcRenderer.invoke('close-window'),
   setCompactMode: (isCompact, height) => ipcRenderer.invoke('set-compact-mode', isCompact, height),
   getScreenSize: () => ipcRenderer.invoke('get-screen-size'),
+  // 标题栏自己拖动；贴边收起（缩成屏幕右边缘的竖条）
+  moveWindow: (x, y, w, h) => ipcRenderer.send('move-window', x, y, w, h),
+  toggleDock: () => ipcRenderer.send('toggle-dock'),
+  dockMove: (y) => ipcRenderer.send('dock-move', y),
+  onDocked: (cb) => ipcRenderer.on('docked', (e, on) => cb(on)),
   
   // 系统通知
   notify: (title, body) => ipcRenderer.invoke('notify', title, body),

@@ -122,6 +122,8 @@ function createWindow() {
 
   // Handle window events
   mainWindow.on('close', (event) => {
+    // 贴边收着时退出：先恢复原样，存下来的才是展开时的大小，下次启动不会是一条竖条
+    if (dock) setDocked(false);
     // Save window bounds
     if (mainWindow) {
       const bounds = mainWindow.getBounds();
@@ -236,8 +238,16 @@ if (!gotTheLock) {
   try {
     globalShortcut.register('CommandOrControl+Alt+I', () => {
       if (!mainWindow) return;
-      mainWindow.show(); mainWindow.focus();
+      mainWindow.show(); mainWindow.focus(); setDocked(false);
       mainWindow.webContents.send('quick-idea');
+    });
+  } catch (e) { console.warn('globalShortcut failed', e); }
+  // Ctrl+Alt+H：贴边收起 / 展开；窗口藏在托盘里时，按它 = 拿出来并展开
+  try {
+    globalShortcut.register('CommandOrControl+Alt+H', () => {
+      if (!mainWindow) return;
+      if (!mainWindow.isVisible()) { mainWindow.show(); setDocked(false); return; }
+      setDocked(!dock);
     });
   } catch (e) { console.warn('globalShortcut failed', e); }
   // Ctrl+Alt+V：把剪贴板文字收进「想法」，不弹出窗口（手机发到微信文件传输助手 → 电脑微信右键复制 → 按它）
@@ -324,8 +334,10 @@ ipcMain.handle('close-window', () => {
 });
 
 // 收起：height = 标题栏 + 正在计时的行数（计时开始 / 结束时 renderer 会再调一次调整高度）
-ipcMain.handle('set-compact-mode', (event, isCompact, height = 46) => {
+ipcMain.handle('set-compact-mode', function compactHandler(event, isCompact, height = 46) {
   if (!mainWindow) return;
+  // 贴边收着时不改窗口大小（不然竖条会被撑回 280 宽），记下最后一次，展开回来再补上
+  if (dock) { queuedCompact = () => compactHandler(event, isCompact, height); return; }
   const bounds = mainWindow.getBounds();
   if (isCompact) {
     if (!isCompactMode) savedHeight = bounds.height; // 已收起时只改高度，不覆盖展开高度
@@ -338,6 +350,50 @@ ipcMain.handle('set-compact-mode', (event, isCompact, height = 46) => {
     mainWindow.setMinimumSize(280, 400);
   }
 });
+
+// 标题栏由页面自己拖动（透明窗口的系统拖动区收不到双击，页面改成自己拖，双击标题栏才能收起）。
+// 宽高用按下时的值一起给：单用 setPosition 在 Windows 缩放屏上会让窗口越挪越宽
+ipcMain.on('move-window', (event, x, y, width, height) => {
+  if (!mainWindow || dock) return;
+  if (width && height) mainWindow.setBounds({ x, y, width, height });
+  else mainWindow.setPosition(x, y);
+});
+
+// ---------- 贴边收起：窗口缩成屏幕右边缘的一条竖条，点竖条回到原来的位置和大小 ----------
+// 双击收起键 / Ctrl+Alt+H 切换。只改窗口大小和位置，置顶照旧
+// Windows 不让窗口窄于 32px：窗口给 DOCK_W，实际可能更宽，多出来的部分伸到屏幕外，竖条在页面里写死 18px 宽
+const DOCK_W = 18, DOCK_H = 44;
+let dock = null;          // 收着时 = { bounds, min, wa }：收起前的位置大小、最小尺寸，贴的那块屏的工作区
+let dockY = null;         // 竖条上下拖过之后停的位置，下次收起还放这里（不退出就一直记着）
+let queuedCompact = null; // 收着期间想改的收起高度（计时开始 / 结束），展开后补做
+
+function moveDock(y) {
+  const wa = dock.wa;
+  dockY = Math.round(Math.min(Math.max(y, wa.y), wa.y + wa.height - DOCK_H));
+  mainWindow.setBounds({ x: wa.x + wa.width - DOCK_W, y: dockY, width: DOCK_W, height: DOCK_H });
+}
+
+function setDocked(on) {
+  if (!mainWindow || mainWindow.isDestroyed() || on === !!dock) return;
+  if (on) {
+    const b = mainWindow.getBounds();
+    const wa = screen.getDisplayMatching(b).workArea; // 窗口在哪块屏，就贴哪块屏的右边（不压任务栏）
+    dock = { bounds: b, min: mainWindow.getMinimumSize(), wa };
+    mainWindow.webContents.send('docked', true); // 先让页面换成竖条，再缩窗口
+    mainWindow.setMinimumSize(1, 1);
+    moveDock(dockY ?? b.y);
+  } else {
+    const d = dock;
+    dock = null;
+    mainWindow.setBounds(d.bounds);
+    mainWindow.setMinimumSize(d.min[0], d.min[1]);
+    if (queuedCompact) { const q = queuedCompact; queuedCompact = null; q(); }
+    mainWindow.webContents.send('docked', false);
+  }
+}
+
+ipcMain.on('toggle-dock', () => setDocked(!dock));
+ipcMain.on('dock-move', (event, y) => { if (dock) moveDock(y); });
 
 ipcMain.handle('notify', (event, title, body) => {
   if (!Notification.isSupported()) return false;
@@ -360,3 +416,6 @@ ipcMain.handle('get-screen-size', () => {
   const primaryDisplay = screen.getPrimaryDisplay();
   return primaryDisplay.workAreaSize;
 });
+
+// 给本机扩展入口用（如在别的快捷键里先展开竖条）
+module.exports = { setDocked, isDocked: () => !!dock };
