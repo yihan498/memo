@@ -157,6 +157,10 @@ function createWindow() {
   // Make window draggable from anywhere
   mainWindow.setMovable(true);
 
+  // 兜底：贴边收着时，系统发起的拉伸 / 拖动一律拦下（Aero Snap、Win+方向键这类也算）
+  mainWindow.on('will-resize', (e) => { if (dock) e.preventDefault(); });
+  mainWindow.on('will-move', (e) => { if (dock) e.preventDefault(); });
+
   // Development tools
   if (process.argv.includes('--dev')) {
     mainWindow.webContents.openDevTools();
@@ -389,11 +393,17 @@ function setDocked(on) {
     const wa = screen.getDisplayMatching(b).workArea; // 窗口在哪块屏，就贴哪块屏的右边（不压任务栏）
     dock = { bounds: b, min: mainWindow.getMinimumSize(), wa };
     mainWindow.webContents.send('docked', true); // 先让页面换成竖条，再缩窗口
+    // 竖条不能调大小、不能被系统拖走：不然边缘一圈是系统的拉伸把手，点不中竖条，拉左边还会把它拽离屏幕右边。
+    // 上下挪位置走页面自己的 dock-move，不受这两项影响
+    mainWindow.setResizable(false);
+    mainWindow.setMovable(false);
     mainWindow.setMinimumSize(1, 1);
     moveDock(dockY ?? b.y);
   } else {
     const d = dock;
     dock = null;
+    mainWindow.setResizable(true);
+    mainWindow.setMovable(true);
     mainWindow.setBounds(d.bounds);
     mainWindow.setMinimumSize(d.min[0], d.min[1]);
     if (queuedCompact) { const q = queuedCompact; queuedCompact = null; q(); }
