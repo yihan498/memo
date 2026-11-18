@@ -1,7 +1,5 @@
 import { keyLabel } from '../utils/helpers.js';
 
-const DBL_MS = 260; // 收起键单击等多久确认不是双击
-
 export class Header {
     constructor(callbacks = {}) {
         this.callbacks = callbacks;
@@ -23,15 +21,14 @@ export class Header {
         setInterval(() => this.updateDate(), 60 * 1000);
     }
 
-    // 收起键：单击 = 收起 / 展开；双击 = 贴到屏幕右边。单击要等一下确认不是双击，免得双击时先收起又展开再贴边
+    // 收起键：单击 = 收起 / 展开，按下就生效，不等；双击 = 贴到屏幕右边。
+    // 双击的第一下已经收起 / 展开了一次，第二下先把它撤回，再贴边，展开竖条时回到双击前的样子
     setupCompactButton() {
         const btn = document.getElementById('compactBtn');
-        let wait = 0;
         btn.addEventListener('click', (e) => {
-            clearTimeout(wait);
-            if (e.detail >= 2) { this.toggleDock(); return; }
-            if (e.detail === 0) { this.toggleCompactMode(); return; } // 键盘 / 程序触发的点击，没有双击可等
-            wait = setTimeout(() => this.toggleCompactMode(), DBL_MS);
+            if (e.detail === 2) { this.toggleCompactMode(); this.toggleDock(); return; }
+            if (e.detail > 2) return; // 连点三下以上不再来回切
+            this.toggleCompactMode();
         });
     }
 
