@@ -373,7 +373,7 @@ ipcMain.on('move-window', (event, x, y, width, height) => {
 });
 
 // ---------- 贴边收起：窗口缩成屏幕右边缘的一条竖条，点竖条回到原来的位置和大小 ----------
-// 双击收起键 / Ctrl+Alt+H 切换。只改窗口大小和位置，置顶照旧
+// 右键收起键 / Ctrl+Alt+H 切换。只改窗口大小和位置，置顶照旧
 // Windows 不让窗口窄于 32px：窗口给 DOCK_W，实际可能更宽，多出来的部分伸到屏幕外，竖条在页面里写死 18px 宽
 const DOCK_W = 18, DOCK_H = 44;
 let dock = null;          // 收着时 = { bounds, min, wa }：收起前的位置大小、最小尺寸，贴的那块屏的工作区

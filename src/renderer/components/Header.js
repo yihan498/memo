@@ -21,15 +21,12 @@ export class Header {
         setInterval(() => this.updateDate(), 60 * 1000);
     }
 
-    // 收起键：单击 = 收起 / 展开，按下就生效，不等；双击 = 贴到屏幕右边。
-    // 双击的第一下已经收起 / 展开了一次，第二下先把它撤回，再贴边，展开竖条时回到双击前的样子
+    // 收起键：左键 = 收起 / 展开，按下就生效；右键 = 贴到屏幕右边。
+    // 不用双击贴边：同一个键单双击做两件事，要么单击得等着确认不是双击，要么双击时先收起再撤回，总有一样别扭
     setupCompactButton() {
         const btn = document.getElementById('compactBtn');
-        btn.addEventListener('click', (e) => {
-            if (e.detail === 2) { this.toggleCompactMode(); this.toggleDock(); return; }
-            if (e.detail > 2) return; // 连点三下以上不再来回切
-            this.toggleCompactMode();
-        });
+        btn.addEventListener('click', () => this.toggleCompactMode());
+        btn.addEventListener('contextmenu', (e) => { e.preventDefault(); this.toggleDock(); });
     }
 
     // 标题栏空白处：按住拖动 = 挪窗口，双击 = 收起 / 展开。
