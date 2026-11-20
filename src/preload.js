@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Window controls
   toggleAlwaysOnTop: () => ipcRenderer.invoke('toggle-always-on-top'),
+  // Mac：输入法组字开始 / 结束，主进程据此临时降低置顶层级，免得候选词被盖住
+  setImeComposing: (on) => ipcRenderer.send('ime-composing', !!on),
   minimizeWindow: () => ipcRenderer.invoke('minimize-window'),
   closeWindow: () => ipcRenderer.invoke('close-window'),
   setCompactMode: (isCompact, height) => ipcRenderer.invoke('set-compact-mode', isCompact, height),

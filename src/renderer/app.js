@@ -122,6 +122,14 @@ class TodoWidgetApp {
         if (window.electronAPI.onClipIdea) window.electronAPI.onClipIdea((text, quiet) => this.handleClipIdea(text, quiet));
         if (window.electronAPI.onCollect) window.electronAPI.onCollect((on) => this.handleCollect(on));
 
+        // Mac 置顶时输入法候选框会被盖住：组字开始 / 结束通知主进程临时降层。
+        // 捕获阶段挂在 document 上，动态生成的编辑框和表单也覆盖得到
+        if (window.electronAPI.setImeComposing) {
+            document.addEventListener('compositionstart', () => window.electronAPI.setImeComposing(true), true);
+            document.addEventListener('compositionend', () => window.electronAPI.setImeComposing(false), true);
+            window.addEventListener('blur', () => window.electronAPI.setImeComposing(false));
+        }
+
         this.setupTabs();
         this.setupDailyBar();
         document.querySelectorAll('.seg-btn').forEach(btn => btn.addEventListener('click', () => this.setSort(btn.dataset.sort)));

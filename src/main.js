@@ -73,8 +73,15 @@ function startCollect() {
  * 不置顶就是普通窗口：Mac 上原来不管置不置顶都设了「出现在所有桌面和全屏软件上」，
  * 结果取消置顶后切到别的桌面或全屏软件时它还会跟过去挡在前面，所以这一项也跟着置顶走。
  * （Windows 没有这个设置，那一句在 Windows 上不起作用。）
+ * Mac 上 screen-saver 层比输入法候选框（pop-up 层）还高，置顶时打中文候选词会被 Memo 盖住；
+ * 所以正在组字时临时降到 floating 层（见 setImeComposing），组字结束或窗口失焦再升回去。
+ * pinned 记着当前是否置顶，imeLowered 记着是否处在降层状态，都由这里和 setImeComposing 维护。
  */
+let pinned = false;
+let imeLowered = false;
 function applyPin(on) {
+  pinned = on;
+  imeLowered = false;
   if (on) {
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
@@ -82,6 +89,20 @@ function applyPin(on) {
     mainWindow.setAlwaysOnTop(false);
     // skipTransformProcessType：不然 Electron 会把 Memo 变回普通程序，Dock 栏里多出一个图标
     mainWindow.setVisibleOnAllWorkspaces(false, { skipTransformProcessType: true });
+  }
+}
+
+// 仅 Mac：组字时降层让候选框露出来，结束时恢复；没置顶或不是 Mac 什么都不做
+function setImeComposing(on) {
+  if (process.platform !== 'darwin' || !mainWindow || mainWindow.isDestroyed()) return;
+  if (on) {
+    if (!pinned || imeLowered) return;
+    imeLowered = true;
+    mainWindow.setAlwaysOnTop(true, 'floating');
+  } else {
+    if (!imeLowered) return;
+    imeLowered = false;
+    if (pinned) mainWindow.setAlwaysOnTop(true, 'screen-saver');
   }
 }
 
@@ -134,6 +155,8 @@ function createWindow() {
   applyPin(alwaysOnTop);
 
   // Handle window events
+  // 兜底：窗口失焦时如果还处在组字降层状态，恢复 screen-saver
+  mainWindow.on('blur', () => setImeComposing(false));
   mainWindow.on('close', (event) => {
     // 贴边收着时退出：先恢复原样，存下来的才是展开时的大小，下次启动不会是一条竖条
     if (dock) setDocked(false);
@@ -337,6 +360,8 @@ ipcMain.handle('toggle-always-on-top', () => {
   store.set('alwaysOnTop', !current);
   return !current;
 });
+
+ipcMain.on('ime-composing', (event, on) => setImeComposing(!!on));
 
 ipcMain.handle('minimize-window', () => {
   mainWindow.hide(); // Hide to tray instead of standard minimize

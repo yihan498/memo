@@ -3,7 +3,7 @@
 **是什么**：Windows 桌面置顶小窗，记两类事——每日常规（一天内完成即可，可计时）+ 零碎待办，并留下完成记录。
 **为什么做**：提醒自己完成每日动作，零碎事项不丢。
 **名字**：项目统一叫 Memo / `memo`；本地数据目录仍是 `%APPDATA%/desktop-todo`（为了不丢数据，故意不改）。
-**当前状态**：v1.7.1 可用。Windows 10 / 11 正式支持；Mac 是测试版（每次发布都会在 GitHub 的 Mac 打包机上打开 Apple 芯片和 Intel 两个包自检，还没在真机上用过）。基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
+**当前状态**：v1.7.3 可用。Windows 10 / 11 正式支持；Mac 是测试版（每次发布都会在 GitHub 的 Mac 打包机上打开 Apple 芯片和 Intel 两个包自检，还没在真机上用过）。基于 [flost8](https://github.com/singharyan006/flost8)（MIT）改造。
 
 ## 下载安装
 打开 [Releases](https://github.com/yihan498/memo/releases/latest)，按电脑下载：
